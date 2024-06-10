@@ -11,8 +11,8 @@ import cv2
 from insightface.app import FaceAnalysis
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 face_app = FaceAnalysis(providers=['CPUExecutionProvider'])
 face_app.prepare(ctx_id=0, det_size=(640, 640))
@@ -58,7 +58,7 @@ async def register_user(name: str = Form(...), image1: str = Form(...), image2: 
     with open(user_file, 'w') as f:
         json.dump(user_data, f)
 
-    return {"message": "User registered successfully."}
+    return {"message": "성공적으로 등록되었습니다."}
 
 @app.post("/identify_user/")
 async def identify_user(file: UploadFile = File(...)):
@@ -71,7 +71,7 @@ async def identify_user(file: UploadFile = File(...)):
 
     target_embedding = faces[0].normed_embedding
     users_dir = "data/users"
-    max_similarity = 0
+    max_similarity = 0.6
     identified_user = None
 
     for user_file in os.listdir(users_dir):

@@ -1,0 +1,160 @@
+/* 기본적인 전역 스타일 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* 헤더 스타일 */
+header {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* 메인 컨텐츠 영역 스타일 */
+main {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+/* 비디오 섹션과 출퇴근 기록 섹션 스타일 */
+.video-section, .entry-list-section, .form-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+/* 비디오 섹션 스타일 */
+.video-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 출퇴근 기록 섹션 스타일 */
+.entry-list-section {
+    width: 40%;
+}
+
+/* 출퇴근 기록 리스트 스타일 */
+.entry-list {
+    list-style: none;
+    padding: 0;
+}
+
+/* 출퇴근 기록 항목 스타일 */
+.entry-list li {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* 폼 컨테이너 스타일 */
+.form-container {
+    width: 100%;
+    max-width: 600px;
+}
+
+/* 폼 그룹 스타일 */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* 폼 레이블 스타일 */
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* 폼 입력 필드 스타일 */
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* 버튼 스타일 */
+.button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    display: block;
+    width: 100%;
+    max-width: 200px;
+    margin: 10px auto;
+    text-align: center;
+}
+
+/* 취소 버튼 스타일 */
+.button.cancel {
+    background-color: #6c757d;
+}
+
+/* 버튼 호버 효과 */
+.button:hover {
+    background-color: #0056b3;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 60px;
+}
+
+/* 모달 컨텐츠 스타일 */
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+/* 비디오 스트림을 좌우 반전하는 스타일 */
+.flip-video {
+    transform: scaleX(-1);
+}
+
+/* 비디오 컨테이너 스타일 */
+.video-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* 캡처된 이미지 스타일 */
+.captured-images img {
+    width: 100px;
+    margin: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}

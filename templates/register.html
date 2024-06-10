@@ -1,35 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 문서의 문자 인코딩을 UTF-8로 설정 -->
     <meta charset="UTF-8">
+    <!-- 뷰포트 설정: 모바일 장치에서 페이지를 적절히 표시 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 페이지 제목 -->
     <title>User Registration</title>
+    <!-- 외부 CSS 파일을 로드 -->
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>User Registration</h1>
-    <form id="registrationForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
-        <button type="button" id="startCapture">Start Capture</button>
-        <div id="videoContainer" style="display:none;">
-            <video id="video" width="640" height="480" autoplay></video>
-            <button type="button" id="capture">Capture Image</button>
-            <p>Captured Images:</p>
-            <img id="photo1" alt="Image 1" style="display:none;">
-            <img id="photo2" alt="Image 2" style="display:none;">
-            <img id="photo3" alt="Image 3" style="display:none;">
-            <input type="hidden" id="image1" name="image1">
-            <input type="hidden" id="image2" name="image2">
-            <input type="hidden" id="image3" name="image3">
-        </div>
-        <button type="submit">Submit</button>
-    </form>
+    <!-- 페이지 헤더 -->
+    <header>
+        <h1>팀원 등록</h1>
+    </header>
+    <!-- 메인 컨텐츠 영역 -->
+    <main>
+        <!-- 사용자 등록 폼 -->
+        <form id="registrationForm" class="form-container">
+            <!-- 사용자 이름 입력 필드 -->
+            <div class="form-group">
+                <label for="name">이름을 작성해주세요:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <!-- 비디오 캡처 시작 버튼 -->
+            <button type="button" id="startCapture" class="button">캡쳐 시작</button>
+            <!-- 비디오 및 캡처된 이미지 표시 영역 -->
+            <div id="videoContainer" class="video-container" style="display:none;">
+                <!-- 웹캠 비디오 스트림을 표시 (좌우 반전 적용) -->
+                <video id="video" class="flip-video" width="640" height="480" autoplay></video>
+                <!-- 이미지 캡처 버튼 -->
+                <button type="button" id="capture" class="button">캡쳐하기</button>
+                <p>캡쳐된 이미지:</p>
+                <!-- 캡처된 이미지 미리보기 -->
+                <div class="captured-images">
+                    <img id="photo1" alt="Image 1" style="display:none;">
+                    <img id="photo2" alt="Image 2" style="display:none;">
+                    <img id="photo3" alt="Image 3" style="display:none;">
+                </div>
+                <!-- 캡처된 이미지 데이터를 숨긴 입력 필드에 저장 -->
+                <input type="hidden" id="image1" name="image1">
+                <input type="hidden" id="image2" name="image2">
+                <input type="hidden" id="image3" name="image3">
+            </div>
+            <!-- 폼 제출 버튼 -->
+            <button type="submit" class="button">사용자 등록</button>
+        </form>
+    </main>
     <script>
-        let captureCount = 0;
-        let stream;
+        let captureCount = 0; // 캡처된 이미지 수
+        let stream; // 웹캠 스트림
 
+        // 비디오 캡처 시작 버튼 클릭 이벤트 핸들러
         document.getElementById('startCapture').addEventListener('click', function() {
             document.getElementById('videoContainer').style.display = 'block';
+            // 웹캠 스트림 시작
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(s) {
                 stream = s;
@@ -42,6 +68,7 @@
             });
         });
 
+        // 이미지 캡처 버튼 클릭 이벤트 핸들러
         document.getElementById('capture').addEventListener('click', function() {
             captureCount++;
             var video = document.getElementById('video');
@@ -49,35 +76,42 @@
             var context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            // 비디오에서 현재 프레임을 캡처하여 캔버스에 그리기
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 캔버스를 이미지 데이터 URL로 변환
             var data = canvas.toDataURL('image/png');
+            // 숨긴 입력 필드와 이미지 미리보기에 캡처된 이미지 데이터 설정
             document.getElementById('image' + captureCount).value = data;
             document.getElementById('photo' + captureCount).src = data;
             document.getElementById('photo' + captureCount).style.display = 'block';
+            // 3개의 이미지를 캡처하면 더 이상 캡처 버튼을 사용할 수 없도록 비활성화
             if (captureCount >= 3) {
                 document.getElementById('capture').disabled = true;
                 stream.getTracks().forEach(track => track.stop());
             }
         });
 
+        // 폼 제출 이벤트 핸들러
         document.getElementById('registrationForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+            event.preventDefault(); // 기본 폼 제출 동작 방지
             var formData = new FormData();
+            // 폼 데이터에 사용자 이름 및 캡처된 이미지 데이터 추가
             formData.append('name', document.getElementById('name').value);
             formData.append('image1', document.getElementById('image1').value);
             formData.append('image2', document.getElementById('image2').value);
             formData.append('image3', document.getElementById('image3').value);
+            // 서버로 폼 데이터 전송
             fetch('/register_user/', {
                 method: 'POST',
                 body: formData
             }).then(response => response.json())
             .then(data => {
-                alert(data.message);
-                if (data.message === "User registered successfully.") {
-                    window.location.href = "/";
+                alert(data.message); // 서버 응답 메시지 표시
+                if (data.message === "성공적으로 등록되었습니다.") {
+                    window.location.href = "/"; // 성공 시 메인 페이지로 리다이렉트
                 }
             }).catch(error => {
-                console.error('Error:', error);
+                console.error('Error:', error); // 오류 발생 시 콘솔에 오류 메시지 출력
             });
         });
     </script>

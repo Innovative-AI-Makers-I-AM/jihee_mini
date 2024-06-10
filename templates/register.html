@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration</title>
+</head>
+<body>
+    <h1>User Registration</h1>
+    <form id="registrationForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <button type="button" id="startCapture">Start Capture</button>
+        <div id="videoContainer" style="display:none;">
+            <video id="video" width="640" height="480" autoplay></video>
+            <button type="button" id="capture">Capture Image</button>
+            <p>Captured Images:</p>
+            <img id="photo1" alt="Image 1" style="display:none;">
+            <img id="photo2" alt="Image 2" style="display:none;">
+            <img id="photo3" alt="Image 3" style="display:none;">
+            <input type="hidden" id="image1" name="image1">
+            <input type="hidden" id="image2" name="image2">
+            <input type="hidden" id="image3" name="image3">
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+    <script>
+        let captureCount = 0;
+        let stream;
+
+        document.getElementById('startCapture').addEventListener('click', function() {
+            document.getElementById('videoContainer').style.display = 'block';
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(s) {
+                stream = s;
+                var video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function(err) {
+                console.log("An error occurred: " + err);
+            });
+        });
+
+        document.getElementById('capture').addEventListener('click', function() {
+            captureCount++;
+            var video = document.getElementById('video');
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var data = canvas.toDataURL('image/png');
+            document.getElementById('image' + captureCount).value = data;
+            document.getElementById('photo' + captureCount).src = data;
+            document.getElementById('photo' + captureCount).style.display = 'block';
+            if (captureCount >= 3) {
+                document.getElementById('capture').disabled = true;
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('image1', document.getElementById('image1').value);
+            formData.append('image2', document.getElementById('image2').value);
+            formData.append('image3', document.getElementById('image3').value);
+            fetch('/register_user/', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.message === "User registered successfully.") {
+                    window.location.href = "/";
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -8,8 +8,16 @@
 </head>
 <body>
     <h1>Welcome</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <button id="capture">Capture</button>
-    <div id="result"></div>
+    <div style="display: flex;">
+        <div>
+            <video id="video" width="640" height="480" autoplay></video>
+            <button id="capture">Capture</button>
+            <div id="result"></div>
+        </div>
+        <div id="entryList" style="margin-left: 20px;">
+            <h2>Entry List</h2>
+            <ul id="entries"></ul>
+        </div>
+    </div>
 </body>
 </html>

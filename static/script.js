@@ -1,6 +1,7 @@
 const video = document.getElementById('video');
 const captureButton = document.getElementById('capture');
 const resultDiv = document.getElementById('result');
+const entriesList = document.getElementById('entries');
 
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
@@ -28,6 +29,7 @@ captureButton.addEventListener('click', () => {
         if (response.ok) {
             const result = await response.json();
             resultDiv.innerHTML = `<p>User: ${result.name}</p><p>Similarity: ${result.similarity}</p>`;
+            addEntry(result.name);
         } else if (response.status === 404) {
             alert('No matching user found. Redirecting to registration page.');
             window.location.href = "/register";
@@ -37,3 +39,11 @@ captureButton.addEventListener('click', () => {
         }
     }, 'image/jpeg');
 });
+
+function addEntry(name) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    const entry = document.createElement('li');
+    entry.textContent = `${timeString} - ${name}`;
+    entriesList.appendChild(entry);
+}

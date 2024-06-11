@@ -21,18 +21,18 @@
         <form id="registrationForm" class="form-container">
             <!-- 사용자 이름 입력 필드 -->
             <div class="form-group">
-                <label for="name">이름을 작성해주세요:</label>
+                <label for="name">이름을 작성해주세요</label>
                 <input type="text" id="name" name="name" required>
             </div>
             <!-- 비디오 캡처 시작 버튼 -->
-            <button type="button" id="startCapture" class="button">캡쳐 시작</button>
+            <!-- <button type="button" id="startCapture" class="button" >캡쳐 시작</button> -->
             <!-- 비디오 및 캡처된 이미지 표시 영역 -->
             <div id="videoContainer" class="video-container" style="display:none;">
                 <!-- 웹캠 비디오 스트림을 표시 (좌우 반전 적용) -->
                 <video id="video" class="flip-video" width="640" height="480" autoplay></video>
                 <!-- 이미지 캡처 버튼 -->
                 <button type="button" id="capture" class="button">캡쳐하기</button>
-                <p>캡쳐된 이미지:</p>
+                <p>캡쳐된 이미지(<span class="cap-count">0</span>/3)</p>
                 <!-- 캡처된 이미지 미리보기 -->
                 <div class="captured-images">
                     <img id="photo1" alt="Image 1" style="display:none;">
@@ -45,7 +45,7 @@
                 <input type="hidden" id="image3" name="image3">
             </div>
             <!-- 폼 제출 버튼 -->
-            <button type="submit" class="button">사용자 등록</button>
+            <button type="submit" class="button" style="display: none;">사용자 등록</button>
         </form>
     </main>
     <script>
@@ -53,7 +53,7 @@
         let stream; // 웹캠 스트림
 
         // 비디오 캡처 시작 버튼 클릭 이벤트 핸들러
-        document.getElementById('startCapture').addEventListener('click', function() {
+        window.addEventListener('load', function() {
             document.getElementById('videoContainer').style.display = 'block';
             // 웹캠 스트림 시작
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -89,6 +89,9 @@
                 document.getElementById('capture').disabled = true;
                 stream.getTracks().forEach(track => track.stop());
             }
+
+            const capCount = document.querySelector(".cap-count");
+            capCount.innerText = captureCount
         });
 
         // 폼 제출 이벤트 핸들러
@@ -114,6 +117,17 @@
                 console.error('Error:', error); // 오류 발생 시 콘솔에 오류 메시지 출력
             });
         });
+
+        
+        
+        
+        // const submitBtn = document.querySelector('button[type="submit"]');
+        // const startCaptureBtn = document.querySelector('#startCapture')
+        
+        // submitBtn.onclick = (e)=>{
+        //     startCaptureBtn.style = "display:none;"
+        // }
+        
     </script>
 </body>
 </html>

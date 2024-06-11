@@ -73,8 +73,9 @@ main {
 /* 폼 레이블 스타일 */
 .form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 16px;
     font-weight: bold;
+    text-align: center;
 }
 
 /* 폼 입력 필드 스타일 */

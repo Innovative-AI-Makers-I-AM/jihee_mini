@@ -1,4 +1,4 @@
-conda 가상환경 python version 3.10 
+conda create -n mini python=3.10 
 
 pip install -r requirements.txt 
 

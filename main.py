@@ -46,10 +46,32 @@ async def register_page(request: Request):
 @app.post("/register_user/")
 async def register_user(name: str = Form(...), image1: str = Form(...), image2: str = Form(...), image3: str = Form(...)):
     """회원가입 처리 엔드포인트"""
-    # 사용자 디렉토리 생성
-    os.makedirs(f'data/users/{name}', exist_ok=True)
+
+    # 중복되는 사용자 이름이 있는지 확인
+    user_names = [file_name.split('.')[0] for file_name in os.listdir('data/users')]
+    user_name = name
+    suffix = ""
+    while user_name + suffix in user_names:
+        if not suffix:
+            suffix = "A"
+        else:
+            #chr() 함수는 ASCII 코드 값을 입력으로 받아 해당하는 문자를 반환하는 파이썬 내장 함수
+            #ord() 함수는 문자를 입력으로 받아 해당하는 ASCII 코드 값을 반환
+            # chr(ord(65)) => A를 반환
+            suffix = chr(ord(suffix) + 1)
+            if suffix > "Z":  # 알파벳이 모두 사용된 경우, 두 글자로 변환
+                suffix = "A" + chr(ord(suffix) + 1)
+    
+    user_name += suffix
+    
+    os.makedirs(f'data/users/{user_name}', exist_ok=True)
     images = [image1, image2, image3]
     embeddings = []
+
+    # # 사용자 디렉토리 생성
+    # os.makedirs(f'data/users/{name}', exist_ok=True)
+    # images = [image1, image2, image3]
+    # embeddings = []
 
     # 각 이미지를 디코딩하여 저장 및 임베딩 생성
     for i, image in enumerate(images, start=1):
@@ -57,7 +79,7 @@ async def register_user(name: str = Form(...), image1: str = Form(...), image2: 
         image_data = base64.b64decode(image.split(",")[1])
         
         # 디코딩된 이미지를 파일로 저장
-        image_path = f'data/users/{name}/image{i}.png'
+        image_path = f'data/users/{user_name}/image{i}.png'
         with open(image_path, "wb") as f:
             f.write(image_data)
         
@@ -75,8 +97,8 @@ async def register_user(name: str = Form(...), image1: str = Form(...), image2: 
         embeddings.append(faces[0].normed_embedding.tolist())
 
     # 사용자 데이터를 JSON 파일로 저장
-    user_data = {"name": name, "embeddings": embeddings}
-    user_file = f"data/users/{name}.json"
+    user_data = {"name": user_name, "embeddings": embeddings}
+    user_file = f"data/users/{user_name}.json"
     with open(user_file, 'w') as f:
         json.dump(user_data, f)
 

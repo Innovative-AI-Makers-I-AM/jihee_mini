@@ -27,13 +27,17 @@
                 <button type="button" id="capture" class="button" style="display:none;">캡쳐하기</button>
                 <!-- 웹캠 비디오 스트림을 표시 (좌우 반전 적용) -->
                 <video id="video" class="flip-video" width="640" height="480" autoplay></video>
-                <p>캡쳐된 이미지(<span class="cap-count-txt">0</span>/3)</p>
+                <p>캡쳐된 이미지(<span class="cap-count">0</span>/3)</p>
                 <!-- 캡처된 이미지 미리보기 -->
                 <div class="captured-images" style="display:flex; justify-content:center;">
+                    <img id="photo1" alt="Image 1" style="display:none;">
+                    <img id="photo2" alt="Image 2" style="display:none;">
+                    <img id="photo3" alt="Image 3" style="display:none;">
                 </div>
                 <!-- 캡처된 이미지 데이터를 숨긴 입력 필드에 저장 -->
-                <span class="hidden-input-list">
-                </span>
+                <input type="hidden" id="image1" name="image1">
+                <input type="hidden" id="image2" name="image2">
+                <input type="hidden" id="image3" name="image3">
                 <!-- 사용자 이름 입력 필드 -->
                 <div class="form-group" style="margin-top: 20px; display: none;">
                     <label for="name">이름을 작성해주세요</label>
@@ -49,33 +53,6 @@
         let stream;
         let previousImage = null;
 
-        const submitBtn = document.querySelector('button[type="submit"]');
-        const formGroup = document.querySelector('.form-group');
-        const captureBtn = document.querySelector("#capture");
-        const capCountTxt = document.querySelector(".cap-count-txt");
-        const video = document.querySelector('#video');
-        const capturedImages = document.querySelector(".captured-images");
-        const hiddenInputList = document.querySelector(".hidden-input-list");
-
-        // X버튼 눌렀을 때의 이벤트 핸들러
-        capturedImages.onclick = (e)=>{
-            if(e.target.tagName == "BUTTON"){
-                // 미리보기 이미지 삭제
-                let nthImg = e.target.dataset.nthPhoto;
-                document.querySelector(`button[data-nth-photo="${nthImg}"]`).parentElement.remove();
-                // 숨긴 입력 필드 삭제
-                document.querySelector(`#image${nthImg}`).remove();
-                
-                // 캡쳐 및 등록 버튼 표시/비표시
-                captureBtn.style.display = "block";
-                submitBtn.style.display = "none";
-
-                // 캡쳐한 숫자 표시하기
-                let imgCnt = document.querySelectorAll(".captured-image").length;
-                capCountTxt.innerText = imgCnt;
-            }
-        }
-
         // 비디오 캡처 시작 버튼 클릭 이벤트 핸들러
         window.addEventListener('load', function() {
             document.getElementById('videoContainer').style.display = 'block';
@@ -83,7 +60,7 @@
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(s) {
                 stream = s;
-                let video = document.getElementById('video');
+                var video = document.getElementById('video');
                 video.srcObject = stream;
                 video.play();
             })
@@ -93,54 +70,16 @@
         });
 
         // 이미지 캡처 버튼 클릭 이벤트 핸들러
-        captureBtn.addEventListener('click', function() {
-            captureCount++;
-            let canvas = document.createElement('canvas');
-            let context = canvas.getContext('2d');
+        document.getElementById('capture').addEventListener('click', function() {
+            var video = document.getElementById('video');
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             // 비디오에서 현재 프레임을 캡처하여 캔버스에 그리기
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             // 캔버스를 이미지 데이터 URL로 변환
-            let data = canvas.toDataURL('image/png');
-            // 숨긴 입력 필드와 이미지 미리보기에 캡처된 이미지 데이터 설정
-            // 이미지 미리보기
-            capturedImages.insertAdjacentHTML("beforeend", 
-                `
-                    <span class="captured-image" style="position:relative;">
-                        <img id="photo${captureCount}" alt="Image 1">
-                        <button type="button" data-nth-photo="${captureCount}" style="position:absolute; right: 6px; top:2px;">X</button>
-                    </span>
-                `
-            );
-            document.getElementById('photo' + captureCount).src = data;
-            document.getElementById('photo' + captureCount).parentElement.style.display = 'block';
-            // 숨긴 입력 필드
-            hiddenInputList.insertAdjacentHTML("beforeend", 
-                `<input type="hidden" id="image${captureCount}" name="image${captureCount}" data-nth-photo="${captureCount}">`
-            );
-            document.getElementById('image' + captureCount).value = data;
-
-
-            // // 3개의 이미지를 캡처하면 더 이상 캡처 버튼을 사용할 수 없도록 비활성화
-            // if (captureCount >= 3) 
-            //     stream.getTracks().forEach(track => track.stop());
-
-            // 캡쳐한 숫자 표시하기
-            let imgCnt = document.querySelectorAll(".captured-image").length;
-            capCountTxt.innerText = imgCnt;
-            
-            // 캡쳐한 숫자에 따라 버튼 표시/비표시
-            console.log("미리보기 이미지 갯수 : ", imgCnt)
-            if(imgCnt == 3){
-                submitBtn.style.display = "block";
-                formGroup.style.display = "block";
-                captureBtn.style.display = "none";
-            } else{
-                submitBtn.style.display = "none";
-                captureBtn.style.display = "block";
-            }
-            
+            var data = canvas.toDataURL('image/png');
 
             // 각도 검사
             checkAngle(data, captureCount + 1).then(result => {
@@ -182,35 +121,8 @@
         }
 
         document.getElementById('registrationForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // 기본 폼 제출 동작 방지
-            let formData = new FormData();
-            let hiddenInputs = hiddenInputList.querySelectorAll("input");
-            
-            // 폼 데이터에 사용자 이름 및 캡처된 이미지 데이터 추가
-            formData.append('name', document.getElementById('name').value);
-            let n = 1;
-            for(let input of hiddenInputs){
-                let nth = input.dataset.nthPhoto;
-                formData.append(`image${n}`, document.getElementById(`image${nth}`).value);
-                n++
-            }
-
-            // 서버로 폼 데이터 전송
-            fetch('/register_user/', {
-                method: 'POST',
-                body: formData
-            }).then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                if (data.message === "성공적으로 등록되었습니다.") {
-                    window.location.href = "/";
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-            });
-
-
-            
+            event.preventDefault();
+            var formData = new FormData();
             const nameField = document.getElementById('name');
             const image1 = document.getElementById('image1').value;
             const image2 = document.getElementById('image2').value;
@@ -225,6 +137,19 @@
             formData.append('front_image', image1);
             formData.append('left_image', image2);
             formData.append('right_image', image3);
+
+            fetch('/register_user/', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.message === "성공적으로 등록되었습니다.") {
+                    window.location.href = "/";
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
         });
 
         async function checkAngle(image, step) {
@@ -238,14 +163,13 @@
             return response.json();
         }
 
+        let video = document.getElementById('video');
 
-        // video가 로드되면 캡쳐버튼이 보이는 이벤트
         video.onloadeddata = (e)=>{
             const captureBtn = document.querySelector("#capture");
             captureBtn.style.display = "block";
+
         }
-
-
     </script>
 </body>
 </html>

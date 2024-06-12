@@ -83,20 +83,62 @@ captureButton.addEventListener('click', () => {
         }
     }, 'image/jpeg');
 });
-
+// ============================가람 추가=============================
 // 확인 버튼 클릭 이벤트 핸들러
 confirmButton.addEventListener('click', () => {
     const now = new Date();
     const timeString = now.toLocaleTimeString();
-    if (currentUserInEntryList) {
-        addExit(currentUserName, now);
-    } else {
+    if (confirmationMessage.textContent.includes('출근')) {
         addEntry(currentUserName, now);
+    } else if (confirmationMessage.textContent.includes('외출')) {
+        addExit(currentUserName, now);
+    } else if (confirmationMessage.textContent.includes('복귀')) {
+        addReturn(currentUserName, now);
+    } else if (confirmationMessage.textContent.includes('퇴근')) {
+        addExit(currentUserName, now);
     }
     confirmationModal.style.display = 'none';
     currentUserName = '';
     currentUserInEntryList = false;
 });
+
+// 외출 기록 추가 함수
+function addExit(name, time) {
+    const entry = document.querySelector(`#entries li[data-name="${name}"]`);
+    if (entry) {
+        const timeString = time.toLocaleTimeString();
+        entry.textContent += ` / ${timeString} (외출)`;
+        entry.setAttribute('data-exit-time', time.toISOString());
+    }
+}
+
+// 복귀 기록 추가 함수
+function addReturn(name, time) {
+    const entry = document.querySelector(`#entries li[data-name="${name}"]`);
+    if (entry) {
+        const timeString = time.toLocaleTimeString();
+        entry.textContent += ` / ${timeString} (복귀)`;
+        entry.removeAttribute('data-exit-time');
+    }
+}
+
+
+
+// ============================가람 추가=============================
+
+// // 확인 버튼 클릭 이벤트 핸들러
+// confirmButton.addEventListener('click', () => {
+//     const now = new Date();
+//     const timeString = now.toLocaleTimeString();
+//     if (currentUserInEntryList) {
+//         addExit(currentUserName, now);
+//     } else {
+//         addEntry(currentUserName, now);
+//     }
+//     confirmationModal.style.display = 'none';
+//     currentUserName = '';
+//     currentUserInEntryList = false;
+// });
 
 // 취소 버튼 클릭 이벤트 핸들러
 cancelButton.addEventListener('click', () => {

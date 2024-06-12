@@ -9,6 +9,7 @@ from typing import List
 import numpy as np
 import cv2
 from insightface.app import FaceAnalysis
+from datetime import datetime
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
@@ -104,6 +105,12 @@ async def identify_user(file: UploadFile = File(...)):
     max_similarity = 0.6  # 유사도의 초기 최대값 설정
     identified_user = None
 
+    #########가람 추가#########
+    # 현재 시간 확인
+    current_time = datetime.now()
+    current_hour = current_time.hour
+    #########가람 추가#########
+
     # 저장된 사용자 데이터를 순회하며 유사도 비교
     for user_file in os.listdir(users_dir):
         if user_file.endswith(".json"):
@@ -119,9 +126,48 @@ async def identify_user(file: UploadFile = File(...)):
                     max_similarity = similarity
                     identified_user = user_data
 
-    # 유사도가 높은 사용자를 찾으면 사용자 이름과 유사도 반환
+    #########가람 추가#########
     if identified_user:
-        return {"name": identified_user["name"], "similarity": max_similarity}
+        last_exit_time = identified_user.get("last_exit_time", None)
+        last_entry_time = identified_user.get("last_entry_time", None)
+
+        # 문자열을 datetime 객체로 변환
+        if last_exit_time is not None:
+            last_exit_time = datetime.fromisoformat(last_exit_time)
+        if last_entry_time is not None:
+            last_entry_time = datetime.fromisoformat(last_entry_time)
+
+        # 현재 시간이 9시 이후 18시 이전인 경우 외출 또는 복귀로 처리
+        if 9 < current_hour < 18:
+            if last_exit_time is None or (last_entry_time and current_time > last_entry_time):
+                # 외출로 처리
+                identified_user["last_exit_time"] = current_time.isoformat()
+                status = "외출"
+            else:
+                # 복귀로 처리
+                identified_user["last_entry_time"] = current_time.isoformat()
+                status = "복귀"
+        else:
+            # 9시 이전에는 출근으로 처리
+            if current_hour <= 9:
+                identified_user["last_entry_time"] = current_time.isoformat()
+                status = "출근"
+            # 18시 이후에는 퇴근으로 처리
+            else:
+                identified_user["last_exit_time"] = current_time.isoformat()
+                status = "퇴근"
+        
+        # 사용자 데이터 업데이트
+        user_file_path = os.path.join(users_dir, f"{identified_user['name']}.json")
+        with open(user_file_path, 'w') as f:
+            json.dump(identified_user, f)
+
+        return {"name": identified_user["name"], "similarity": max_similarity, "status": status}
+    #########가람 추가#########
+
+    # # 유사도가 높은 사용자를 찾으면 사용자 이름과 유사도 반환
+    # if identified_user:
+    #     return {"name": identified_user["name"], "similarity": max_similarity}
 
     # 매칭되는 사용자를 찾지 못한 경우 예외 발생
     raise HTTPException(status_code=404, detail="No matching user found")

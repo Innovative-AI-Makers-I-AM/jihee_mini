@@ -112,6 +112,35 @@ captureButton.addEventListener('click', () => {
                 alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
                 alreadyExitedModal.style.display = 'block';
             } else {
+                // 추가
+                const now = new Date();
+                const hour = now.getHours();
+                // 출퇴근 상태 업데이트
+                if (hour < 9 || hour >= 18) {
+                    currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+                } else {
+                    currentAttendanceStatus = AttendanceStatus.ON_DUTY;
+                }
+                // 외출 및 복귀 상태 체크
+                if (currentAttendanceStatus === AttendanceStatus.ON_DUTY && hour >= 9 && hour < 18) {
+                    currentAttendanceStatus = AttendanceStatus.OUT_FOR_WORK;
+                } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK && hour >= 9 && hour < 18) {
+                    // 외출 중이면서 이미 출근 상태인 경우에만 복귀로 처리
+                    if (currentUserInEntryList) {
+                        currentAttendanceStatus = AttendanceStatus.BACK_TO_WORK;
+                    }
+                }
+                // 출입 기록 추가
+                if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
+                    addEntry(`${currentUserName} - 출근`, now);
+                } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
+                    addExit(`${currentUserName} - 퇴근`, now);
+                } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
+                    addEntry(`${currentUserName} - 외출`, now);
+                } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
+                    addEntry(`${currentUserName} - 복귀`, now);
+                }
+                // 추가
                 confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
                 confirmationModal.style.display = 'block';
             }
@@ -192,46 +221,46 @@ const AttendanceStatus = {
 let currentAttendanceStatus = AttendanceStatus.NOT_SET; // 현재 출퇴근 상태
 
 // 출퇴근 상태를 업데이트하는 함수
-function updateAttendanceStatus() {
-    const now = new Date();
-    const hour = now.getHours();
+// function updateAttendanceStatus() {
+//     const now = new Date();
+//     const hour = now.getHours();
 
-    if (currentAttendanceStatus === AttendanceStatus.NOT_SET) {
-        if (hour < 9 || hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        } else {
-            currentAttendanceStatus = AttendanceStatus.ON_DUTY;
-            addEntry('출근', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
-        if (hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        } else if (hour >= 9) {
-            currentAttendanceStatus = AttendanceStatus.OUT_FOR_WORK;
-            addEntry('외출', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
-        if (hour < 9) {
-            currentAttendanceStatus = AttendanceStatus.BACK_TO_WORK;
-            addEntry('복귀', now);
-        } else if (hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
-        if (hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
-        if (hour < 9) {
-            currentAttendanceStatus = AttendanceStatus.ON_DUTY;
-            addEntry('출근', now);
-        }
-    }
-}
+//     if (currentAttendanceStatus === AttendanceStatus.NOT_SET) {
+//         if (hour < 9 || hour >= 18) {
+//             currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+//             addEntry('퇴근', now);
+//         } else {
+//             currentAttendanceStatus = AttendanceStatus.ON_DUTY;
+//             addEntry('출근', now);
+//         }
+//     } else if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
+//         if (hour >= 18) {
+//             currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+//             addEntry('퇴근', now);
+//         } else if (hour >= 9) {
+//             currentAttendanceStatus = AttendanceStatus.OUT_FOR_WORK;
+//             addEntry('외출', now);
+//         }
+//     } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
+//         if (hour < 9) {
+//             currentAttendanceStatus = AttendanceStatus.BACK_TO_WORK;
+//             addEntry('복귀', now);
+//         } else if (hour >= 18) {
+//             currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+//             addEntry('퇴근', now);
+//         }
+//     } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
+//         if (hour >= 18) {
+//             currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+//             addEntry('퇴근', now);
+//         }
+//     } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
+//         if (hour < 9) {
+//             currentAttendanceStatus = AttendanceStatus.ON_DUTY;
+//             addEntry('출근', now);
+//         }
+//     }
+// }
 
 
-// // ============================가람 추가=============================
+// ============================가람 추가=============================

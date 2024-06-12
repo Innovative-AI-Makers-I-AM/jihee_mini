@@ -170,3 +170,64 @@ function calculateTotalTime(entryTime, exitTime) {
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}시간 ${minutes}분`;
 }
+
+
+
+/////// 가람 추가
+// ============================가람 추가=============================
+
+// 출퇴근 상태
+const AttendanceStatus = {
+    NOT_SET: 'NOT_SET', // 기본값
+    ON_DUTY: 'ON_DUTY', // 출근
+    OUT_FOR_WORK: 'OUT_FOR_WORK', // 외출
+    BACK_TO_WORK: 'BACK_TO_WORK', // 복귀
+    OFF_DUTY: 'OFF_DUTY' // 퇴근
+};
+
+let currentAttendanceStatus = AttendanceStatus.NOT_SET; // 현재 출퇴근 상태
+
+// 출퇴근 상태를 업데이트하는 함수
+function updateAttendanceStatus() {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (currentAttendanceStatus === AttendanceStatus.NOT_SET) {
+        if (hour < 9 || hour >= 18) {
+            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+            addEntry('퇴근', now);
+        } else {
+            currentAttendanceStatus = AttendanceStatus.ON_DUTY;
+            addEntry('출근', now);
+        }
+    } else if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
+        if (hour >= 18) {
+            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+            addEntry('퇴근', now);
+        } else if (hour >= 9) {
+            currentAttendanceStatus = AttendanceStatus.OUT_FOR_WORK;
+            addEntry('외출', now);
+        }
+    } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
+        if (hour < 9) {
+            currentAttendanceStatus = AttendanceStatus.BACK_TO_WORK;
+            addEntry('복귀', now);
+        } else if (hour >= 18) {
+            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+            addEntry('퇴근', now);
+        }
+    } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
+        if (hour >= 18) {
+            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
+            addEntry('퇴근', now);
+        }
+    } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
+        if (hour < 9) {
+            currentAttendanceStatus = AttendanceStatus.ON_DUTY;
+            addEntry('출근', now);
+        }
+    }
+}
+
+
+// // ============================가람 추가=============================

@@ -28,6 +28,36 @@ def calculate_face_similarity(feat1, feat2) -> float:
     similarity = np.dot(feat1, feat2.T)
     return float(similarity)
 
+def check_image_angles(faces):
+    """
+    얼굴 이미지에서 얼굴 각도를 체크하는 함수
+    """
+    for face in faces:
+        # 얼굴의 랜드마크 추출
+        landmarks = face.landmark_2d_106
+        
+        # 왼쪽 눈, 오른쪽 눈, 코의 위치 추출
+        left_eye = landmarks[38]
+        right_eye = landmarks[88]
+        nose = landmarks[54]
+        
+        # 눈 사이의 거리 계산
+        dx = right_eye[0] - left_eye[0]
+        dy = right_eye[1] - left_eye[1]
+        
+        # 눈 사이의 각도 계산 (라디안을 도로 변환)
+        angle = np.arctan2(dy, dx) * 180 / np.pi
+        
+        # 각도를 기준으로 얼굴 방향 판단
+        print(f"Angle: {angle}")  # 각도 값을 로그로 출력
+        if -1 < angle < 2:
+            return 'front'  # 정면
+        elif angle <= -1:
+            return 'left'   # 왼쪽
+        elif angle >= 2:
+            return 'right'  # 오른쪽
+    return 'unknown'
+
 @app.on_event("startup")
 async def startup_event():
     """서버 시작 시 'data/users' 디렉토리 존재 여부를 확인하고, 없을 경우 생성"""
@@ -43,13 +73,59 @@ async def register_page(request: Request):
     """회원가입 페이지로 접근 시 register.html 템플릿 렌더링"""
     return templates.TemplateResponse("register.html", {"request": request})
 
+@app.post("/check_similarity/")
+async def check_similarity(image: str = Form(...), previous_image: str = Form(None)):
+    """이미지 유사도 검사 엔드포인트"""
+    image_data = base64.b64decode(image.split(",")[1])
+    img = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
+    faces = face_app.get(img)
+    
+    if not faces:
+        raise HTTPException(status_code=400, detail="No face detected")
+
+    current_embedding = faces[0].normed_embedding
+    
+    if previous_image:
+        previous_image_data = base64.b64decode(previous_image.split(",")[1])
+        previous_img = cv2.imdecode(np.frombuffer(previous_image_data, np.uint8), cv2.IMREAD_COLOR)
+        previous_faces = face_app.get(previous_img)
+        
+        if not previous_faces:
+            raise HTTPException(status_code=400, detail="No face detected in previous image")
+        
+        previous_embedding = previous_faces[0].normed_embedding
+        similarity = calculate_face_similarity(current_embedding, previous_embedding)
+        
+        if similarity > 0.9:  # 임의로 유사도 0.9를 기준으로 설정
+            return {"message": "Images are too similar", "similarity": similarity}
+    
+    return {"message": "Images are acceptable", "similarity": 0}
+
+
 @app.post("/register_user/")
-async def register_user(name: str = Form(...), image1: str = Form(...), image2: str = Form(...), image3: str = Form(...)):
+async def register_user(name: str = Form(...), front_image: str = Form(...), left_image: str = Form(...), right_image: str = Form(...)):
     """회원가입 처리 엔드포인트"""
-    # 사용자 디렉토리 생성
-    os.makedirs(f'data/users/{name}', exist_ok=True)
-    images = [image1, image2, image3]
+
+    # 중복되는 사용자 이름이 있는지 확인
+    user_names = [file_name.split('.')[0] for file_name in os.listdir('data/users')]
+    user_name = name
+    suffix = ""
+    while user_name + suffix in user_names:
+        if not suffix:
+            suffix = "A"
+        else:
+            # chr() 함수는 ASCII 코드 값을 입력으로 받아 해당하는 문자를 반환하는 파이썬 내장 함수
+            # ord() 함수는 문자를 입력으로 받아 해당하는 ASCII 코드 값을 반환
+            suffix = chr(ord(suffix) + 1)
+            if suffix > "Z":  # 알파벳이 모두 사용된 경우, 두 글자로 변환
+                suffix = "A" + chr(ord(suffix) + 1)
+    
+    user_name += suffix
+    
+    os.makedirs(f'data/users/{user_name}', exist_ok=True)
+    images = [front_image, left_image, right_image]
     embeddings = []
+    angles = {'front': 0, 'left': 0, 'right': 0}
 
     # 각 이미지를 디코딩하여 저장 및 임베딩 생성
     for i, image in enumerate(images, start=1):
@@ -57,7 +133,7 @@ async def register_user(name: str = Form(...), image1: str = Form(...), image2: 
         image_data = base64.b64decode(image.split(",")[1])
         
         # 디코딩된 이미지를 파일로 저장
-        image_path = f'data/users/{name}/image{i}.png'
+        image_path = f'data/users/{user_name}/image{i}.png'
         with open(image_path, "wb") as f:
             f.write(image_data)
         
@@ -71,16 +147,24 @@ async def register_user(name: str = Form(...), image1: str = Form(...), image2: 
         if not faces:
             raise HTTPException(status_code=400, detail="No face detected in one of the images")
 
-        # 얼굴 임베딩을 리스트에 추가
+        angle = check_image_angles(faces)
+        print(f"Image {i}: {angle}")  # 각 이미지의 각도 값을 로그로 출력
+        if angle == 'unknown':
+            raise HTTPException(status_code=400, detail="Image angle could not be determined")
+        angles[angle] += 1
+
         embeddings.append(faces[0].normed_embedding.tolist())
 
-    # 사용자 데이터를 JSON 파일로 저장
-    user_data = {"name": name, "embeddings": embeddings}
-    user_file = f"data/users/{name}.json"
+    if angles['front'] != 1 or angles['left'] != 1 or angles['right'] != 1:
+        raise HTTPException(status_code=400, detail="Images must include front, left, and right sides")
+
+    user_data = {"name": user_name, "embeddings": embeddings}
+    user_file = f"data/users/{user_name}.json"
     with open(user_file, 'w') as f:
         json.dump(user_data, f)
 
     return {"message": "성공적으로 등록되었습니다."}
+
 
 @app.post("/identify_user/")
 async def identify_user(file: UploadFile = File(...)):
@@ -96,7 +180,7 @@ async def identify_user(file: UploadFile = File(...)):
 
     # 얼굴을 감지하지 못한 경우 예외 발생
     if not faces:
-        raise HTTPException(status_code=400, detail="No face detected")
+        raise HTTPException(status_code=400, detail="얼굴이 인식되지 않았습니다. 다시 화면에 얼굴을 인식하세요.")
 
     # 감지된 얼굴의 임베딩 추출
     target_embedding = faces[0].normed_embedding

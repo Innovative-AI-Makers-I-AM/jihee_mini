@@ -6,7 +6,7 @@
     <!-- 뷰포트 설정: 모바일 장치에서 페이지를 적절히 표시 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 페이지 제목 -->
-    <title>User Registration</title>
+    <title>팀원등록</title>
     <!-- 외부 CSS 파일을 로드 -->
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -19,22 +19,17 @@
     <main>
         <!-- 사용자 등록 폼 -->
         <form id="registrationForm" class="form-container">
-            <!-- 사용자 이름 입력 필드 -->
-            <div class="form-group">
-                <label for="name">이름을 작성해주세요:</label>
-                <input type="text" id="name" name="name" required>
-            </div>
             <!-- 비디오 캡처 시작 버튼 -->
-            <button type="button" id="startCapture" class="button">캡쳐 시작</button>
+            <!-- <button type="button" id="startCapture" class="button" >캡쳐 시작</button> -->
             <!-- 비디오 및 캡처된 이미지 표시 영역 -->
             <div id="videoContainer" class="video-container" style="display:none;">
+                <p id="captureInstructions">첫 번째 사진: 정면을 향해 주세요.</p>
+                <button type="button" id="capture" class="button" style="display:none;">캡쳐하기</button>
                 <!-- 웹캠 비디오 스트림을 표시 (좌우 반전 적용) -->
                 <video id="video" class="flip-video" width="640" height="480" autoplay></video>
-                <!-- 이미지 캡처 버튼 -->
-                <button type="button" id="capture" class="button">캡쳐하기</button>
-                <p>캡쳐된 이미지:</p>
+                <p>캡쳐된 이미지(<span class="cap-count">0</span>/3)</p>
                 <!-- 캡처된 이미지 미리보기 -->
-                <div class="captured-images">
+                <div class="captured-images" style="display:flex; justify-content:center;">
                     <img id="photo1" alt="Image 1" style="display:none;">
                     <img id="photo2" alt="Image 2" style="display:none;">
                     <img id="photo3" alt="Image 3" style="display:none;">
@@ -43,17 +38,23 @@
                 <input type="hidden" id="image1" name="image1">
                 <input type="hidden" id="image2" name="image2">
                 <input type="hidden" id="image3" name="image3">
+                <!-- 사용자 이름 입력 필드 -->
+                <div class="form-group" style="margin-top: 20px; display: none;">
+                    <label for="name">이름을 작성해주세요</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
             </div>
             <!-- 폼 제출 버튼 -->
-            <button type="submit" class="button">사용자 등록</button>
+            <button type="submit" class="button" style="display: none;">완료</button>
         </form>
     </main>
     <script>
-        let captureCount = 0; // 캡처된 이미지 수
-        let stream; // 웹캠 스트림
+        let captureCount = 0;
+        let stream;
+        let previousImage = null;
 
         // 비디오 캡처 시작 버튼 클릭 이벤트 핸들러
-        document.getElementById('startCapture').addEventListener('click', function() {
+        window.addEventListener('load', function() {
             document.getElementById('videoContainer').style.display = 'block';
             // 웹캠 스트림 시작
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -70,7 +71,6 @@
 
         // 이미지 캡처 버튼 클릭 이벤트 핸들러
         document.getElementById('capture').addEventListener('click', function() {
-            captureCount++;
             var video = document.getElementById('video');
             var canvas = document.createElement('canvas');
             var context = canvas.getContext('2d');
@@ -80,40 +80,94 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             // 캔버스를 이미지 데이터 URL로 변환
             var data = canvas.toDataURL('image/png');
-            // 숨긴 입력 필드와 이미지 미리보기에 캡처된 이미지 데이터 설정
-            document.getElementById('image' + captureCount).value = data;
-            document.getElementById('photo' + captureCount).src = data;
-            document.getElementById('photo' + captureCount).style.display = 'block';
-            // 3개의 이미지를 캡처하면 더 이상 캡처 버튼을 사용할 수 없도록 비활성화
-            if (captureCount >= 3) {
-                document.getElementById('capture').disabled = true;
-                stream.getTracks().forEach(track => track.stop());
-            }
+            
+            checkSimilarity(data, previousImage).then(result => {
+                if (result.message === "Images are too similar") {
+                    alert("방향에 맞게 캡쳐를 진행해주세요.");
+                } else {
+                    captureCount++;
+                    document.getElementById('image' + captureCount).value = data;
+                    document.getElementById('photo' + captureCount).src = data;
+                    document.getElementById('photo' + captureCount).style.display = 'block';
+                    previousImage = data;
+                    if (captureCount >= 3) {
+                        document.getElementById('capture').disabled = true;
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    const capCount = document.querySelector(".cap-count");
+                    capCount.innerText = captureCount;
+                    updateInstructions(); // 캡처 후 안내 메시지 업데이트
+                    if(captureCount == 3){
+                        const submitBtn = document.querySelector('button[type="submit"]');
+                        const formGroup = document.querySelector('.form-group');
+                        submitBtn.style.display = "block";
+                        formGroup.style.display = "block";
+                    }
+                }
+            });
         });
 
-        // 폼 제출 이벤트 핸들러
+        function updateInstructions() {
+            const instructions = document.getElementById('captureInstructions');
+            if (captureCount === 1) {
+                instructions.textContent = "두 번째 사진: 왼쪽 얼굴을 향해 주세요.";
+            } else if (captureCount === 2) {
+                instructions.textContent = "세 번째 사진: 오른쪽 얼굴을 향해 주세요.";
+            }
+        }
+
         document.getElementById('registrationForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // 기본 폼 제출 동작 방지
+            event.preventDefault();
             var formData = new FormData();
-            // 폼 데이터에 사용자 이름 및 캡처된 이미지 데이터 추가
-            formData.append('name', document.getElementById('name').value);
-            formData.append('image1', document.getElementById('image1').value);
-            formData.append('image2', document.getElementById('image2').value);
-            formData.append('image3', document.getElementById('image3').value);
-            // 서버로 폼 데이터 전송
+            const nameField = document.getElementById('name');
+            const image1 = document.getElementById('image1').value;
+            const image2 = document.getElementById('image2').value;
+            const image3 = document.getElementById('image3').value;
+            
+            if (!nameField.value || !image1 || !image2 || !image3) {
+                alert("모든 필드를 채워주세요.");
+                return;
+            }
+
+            formData.append('name', nameField.value);
+            formData.append('front_image', image1);
+            formData.append('left_image', image2);
+            formData.append('right_image', image3);
+
             fetch('/register_user/', {
                 method: 'POST',
                 body: formData
             }).then(response => response.json())
             .then(data => {
-                alert(data.message); // 서버 응답 메시지 표시
+                alert(data.message);
                 if (data.message === "성공적으로 등록되었습니다.") {
-                    window.location.href = "/"; // 성공 시 메인 페이지로 리다이렉트
+                    window.location.href = "/";
                 }
             }).catch(error => {
-                console.error('Error:', error); // 오류 발생 시 콘솔에 오류 메시지 출력
+                console.error('Error:', error);
             });
         });
+
+        async function checkSimilarity(currentImage, previousImage) {
+            var formData = new FormData();
+            formData.append('image', currentImage);
+            if (previousImage) {
+                formData.append('previous_image', previousImage);
+            }
+            const response = await fetch('/check_similarity/', {
+                method: 'POST',
+                body: formData
+            });
+            return response.json();
+        }
+
+        let video = document.getElementById('video');
+
+        video.onloadeddata = (e)=>{
+            const captureBtn = document.querySelector("#capture");
+            captureBtn.style.display = "block";
+
+        }
     </script>
 </body>
 </html>

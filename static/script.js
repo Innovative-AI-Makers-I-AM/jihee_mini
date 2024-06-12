@@ -40,12 +40,14 @@ function startVideoStream() {
             console.error('Error accessing webcam:', err);
         });
 }
+let isFaceDetected = false;
 
 // FaceMesh 라이브러리 스크립트 로드 후 실행될 함수
 function onScriptLoad() {
     // Mediapipe 얼굴 랜드마크 감지 함수
     async function onResults(results) {
-        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+        if (!isFaceDetected && results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            isFaceDetected = true; // 얼굴이 감지되면 플래그를 true로 설정
             const landmarks = results.multiFaceLandmarks[0];
             // 필요에 따라 landmarks를 처리하거나 저장할 수 있습니다.
             console.log('Landmarks detected:', landmarks);
@@ -74,7 +76,9 @@ function onScriptLoad() {
     // 웹캠 비디오 스트림 연결
     // faceMesh.send({ image: video });
     setInterval(() => {
-        faceMesh.send({ image: video });
+        if (!isFaceDetected) { // 얼굴이 감지되지 않았을 때만 얼굴 감지 요청
+            faceMesh.send({ image: video });
+        }
     }, 500);
 }
 

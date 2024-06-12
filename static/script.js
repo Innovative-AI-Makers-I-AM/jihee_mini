@@ -6,11 +6,13 @@ function getCurrentDate() {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}.${month}.${day}`;
 }
+
 // 페이지가 로드될 때 출퇴근 기록 제목에 현재 날짜 추가
 document.addEventListener('DOMContentLoaded', () => {
     const recordTitle = document.getElementById('recordTitle');
     recordTitle.textContent += ` (${getCurrentDate()})`;
 });
+
 const video = document.getElementById('video');
 const captureButton = document.getElementById('capture');
 const resultDiv = document.getElementById('result');
@@ -24,6 +26,7 @@ const alreadyExitedMessage = document.getElementById('alreadyExitedMessage');
 const alreadyExitedConfirmButton = document.getElementById('alreadyExitedConfirmButton');
 let currentUserName = '';
 let currentUserInEntryList = false;
+
 // 웹캠 비디오 스트림을 시작하는 함수
 function startVideoStream() {
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -54,7 +57,7 @@ function onScriptLoad() {
 
             // 얼굴이 감지되면 사진을 찍는 함수 호출
             captureButton.click();
-            updateAttendanceStatus();
+            // updateAttendanceStatus(); // 가람 추가 후, 생략
             console.log("capture button 클릭")
         } else {
             console.log('No face detected');
@@ -86,6 +89,8 @@ function onScriptLoad() {
 // 웹캠 비디오 스트림 시작
 startVideoStream();
 
+
+
 // 캡처 버튼 클릭 이벤트 핸들러
 captureButton.addEventListener('click', () => {
     // 캔버스를 생성하여 비디오에서 이미지 캡처
@@ -112,19 +117,20 @@ captureButton.addEventListener('click', () => {
             updateAttendanceStatus();
 
             // 출입 기록 추가
-            const now = new Date();
-            if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
-                addEntry(`${currentUserName} - 출근`, now);
-            } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
-                addExit(`${currentUserName} - 퇴근`, now);
-            } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
-                addOutForWork(`${currentUserName} - 외출`, now);
-            } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
-                addBackToWork(`${currentUserName} - 복귀`, now);
-            }
+            // const now = new Date();
+            // if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
+            //     addEntry(`${currentUserName} - 출근`, now);
+            // } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
+            //     addExit(`${currentUserName} - 퇴근`, now);
+            // } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
+            //     addOutForWork(`${currentUserName} - 외출`, now);
+            // } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
+            //     addBackToWork(`${currentUserName} - 복귀`, now);
+            // }
 
             confirmationMessage.textContent = `${currentUserName}님 ${currentAttendanceStatus === AttendanceStatus.OFF_DUTY ? '퇴근' : '출근'} 확인을 하시겠습니까?`;
             confirmationModal.style.display = 'block';
+            // 가람추가
             
             // // 이미 퇴근한 사용자인지 확인
             // const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
@@ -175,6 +181,7 @@ captureButton.addEventListener('click', () => {
         }
     }, 'image/jpeg');
 });
+
 // 확인 버튼 클릭 이벤트 핸들러
 confirmButton.addEventListener('click', () => {
     const now = new Date();
@@ -188,16 +195,19 @@ confirmButton.addEventListener('click', () => {
     currentUserName = '';
     currentUserInEntryList = false;
 });
+
 // 취소 버튼 클릭 이벤트 핸들러
 cancelButton.addEventListener('click', () => {
     confirmationModal.style.display = 'none';
     currentUserName = '';
     currentUserInEntryList = false;
 });
+
 // 이미 퇴근한 사용자 확인 버튼 클릭 이벤트 핸들러
 alreadyExitedConfirmButton.addEventListener('click', () => {
     alreadyExitedModal.style.display = 'none';
 });
+
 // 출근 기록 추가 함수
 function addEntry(name, time) {
     const timeString = time.toLocaleTimeString();
@@ -207,6 +217,7 @@ function addEntry(name, time) {
     entry.setAttribute('data-entry-time', time.toISOString());
     entriesList.appendChild(entry);
 }
+
 // 퇴근 기록 추가 함수
 function addExit(name, exitTime) {
     const entry = document.querySelector(`#entries li[data-name="${name}"]`);
@@ -218,6 +229,7 @@ function addExit(name, exitTime) {
         entry.setAttribute('data-exit-time', exitTime.toISOString());
     }
 }
+
 // 총 근무시간 계산 함수
 function calculateTotalTime(entryTime, exitTime) {
     const diff = exitTime - entryTime;

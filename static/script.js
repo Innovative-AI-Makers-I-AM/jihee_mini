@@ -6,13 +6,11 @@ function getCurrentDate() {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}.${month}.${day}`;
 }
-
 // 페이지가 로드될 때 출퇴근 기록 제목에 현재 날짜 추가
 document.addEventListener('DOMContentLoaded', () => {
     const recordTitle = document.getElementById('recordTitle');
     recordTitle.textContent += ` (${getCurrentDate()})`;
 });
-
 const video = document.getElementById('video');
 const captureButton = document.getElementById('capture');
 const resultDiv = document.getElementById('result');
@@ -26,7 +24,6 @@ const alreadyExitedMessage = document.getElementById('alreadyExitedMessage');
 const alreadyExitedConfirmButton = document.getElementById('alreadyExitedConfirmButton');
 let currentUserName = '';
 let currentUserInEntryList = false;
-
 // 웹캠 비디오 스트림을 시작하는 함수
 function startVideoStream() {
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -92,23 +89,19 @@ captureButton.addEventListener('click', () => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
-
     // 캡처한 이미지를 Blob 형식으로 변환
     canvas.toBlob(async (blob) => {
         const formData = new FormData();
         formData.append('file', blob);
-
         // 서버로 이미지 업로드 및 사용자 인식 요청
         const response = await fetch('/identify_user/', {
             method: 'POST',
             body: formData
         });
-
         if (response.ok) {
             const result = await response.json();
             currentUserName = result.name;
             currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
-
             // 이미 퇴근한 사용자인지 확인
             const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
             if (alreadyExited) {
@@ -127,64 +120,6 @@ captureButton.addEventListener('click', () => {
         }
     }, 'image/jpeg');
 });
-// ============================가람 추가=============================
-
-// 출퇴근 상태
-const AttendanceStatus = {
-    NOT_SET: 'NOT_SET', // 기본값
-    ON_DUTY: 'ON_DUTY', // 출근
-    OUT_FOR_WORK: 'OUT_FOR_WORK', // 외출
-    BACK_TO_WORK: 'BACK_TO_WORK', // 복귀
-    OFF_DUTY: 'OFF_DUTY' // 퇴근
-};
-
-let currentAttendanceStatus = AttendanceStatus.NOT_SET; // 현재 출퇴근 상태
-
-// 출퇴근 상태를 업데이트하는 함수
-function updateAttendanceStatus() {
-    const now = new Date();
-    const hour = now.getHours();
-
-    if (currentAttendanceStatus === AttendanceStatus.NOT_SET) {
-        if (hour < 9 || hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        } else {
-            currentAttendanceStatus = AttendanceStatus.ON_DUTY;
-            addEntry('출근', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.ON_DUTY) {
-        if (hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        } else if (hour >= 9) {
-            currentAttendanceStatus = AttendanceStatus.OUT_FOR_WORK;
-            addEntry('외출', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
-        if (hour < 9) {
-            currentAttendanceStatus = AttendanceStatus.BACK_TO_WORK;
-            addEntry('복귀', now);
-        } else if (hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
-        if (hour >= 18) {
-            currentAttendanceStatus = AttendanceStatus.OFF_DUTY;
-            addEntry('퇴근', now);
-        }
-    } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
-        if (hour < 9) {
-            currentAttendanceStatus = AttendanceStatus.ON_DUTY;
-            addEntry('출근', now);
-        }
-    }
-}
-
-
-// // ============================가람 추가=============================
-
 // 확인 버튼 클릭 이벤트 핸들러
 confirmButton.addEventListener('click', () => {
     const now = new Date();
@@ -198,19 +133,16 @@ confirmButton.addEventListener('click', () => {
     currentUserName = '';
     currentUserInEntryList = false;
 });
-
 // 취소 버튼 클릭 이벤트 핸들러
 cancelButton.addEventListener('click', () => {
     confirmationModal.style.display = 'none';
     currentUserName = '';
     currentUserInEntryList = false;
 });
-
 // 이미 퇴근한 사용자 확인 버튼 클릭 이벤트 핸들러
 alreadyExitedConfirmButton.addEventListener('click', () => {
     alreadyExitedModal.style.display = 'none';
 });
-
 // 출근 기록 추가 함수
 function addEntry(name, time) {
     const timeString = time.toLocaleTimeString();
@@ -220,7 +152,6 @@ function addEntry(name, time) {
     entry.setAttribute('data-entry-time', time.toISOString());
     entriesList.appendChild(entry);
 }
-
 // 퇴근 기록 추가 함수
 function addExit(name, exitTime) {
     const entry = document.querySelector(`#entries li[data-name="${name}"]`);
@@ -232,7 +163,6 @@ function addExit(name, exitTime) {
         entry.setAttribute('data-exit-time', exitTime.toISOString());
     }
 }
-
 // 총 근무시간 계산 함수
 function calculateTotalTime(entryTime, exitTime) {
     const diff = exitTime - entryTime;

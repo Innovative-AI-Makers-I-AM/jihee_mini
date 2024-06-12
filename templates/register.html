@@ -80,11 +80,10 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             // 캔버스를 이미지 데이터 URL로 변환
             var data = canvas.toDataURL('image/png');
-            
-            checkSimilarity(data, previousImage).then(result => {
-                if (result.message === "Images are too similar") {
-                    alert("방향에 맞게 캡쳐를 진행해주세요.");
-                } else {
+
+            // 각도 검사
+            checkAngle(data, captureCount + 1).then(result => {
+                if (result.message === "Angle is correct") {
                     captureCount++;
                     document.getElementById('image' + captureCount).value = data;
                     document.getElementById('photo' + captureCount).src = data;
@@ -103,7 +102,12 @@
                         submitBtn.style.display = "block";
                         formGroup.style.display = "block";
                     }
+                } else {
+                    alert(result.detail);
                 }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert("Error checking angle. Please try again.");
             });
         });
 
@@ -148,13 +152,11 @@
             });
         });
 
-        async function checkSimilarity(currentImage, previousImage) {
+        async function checkAngle(image, step) {
             var formData = new FormData();
-            formData.append('image', currentImage);
-            if (previousImage) {
-                formData.append('previous_image', previousImage);
-            }
-            const response = await fetch('/check_similarity/', {
+            formData.append('image', image);
+            formData.append('step', step);
+            const response = await fetch('/check_angle/', {
                 method: 'POST',
                 body: formData
             });

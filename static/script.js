@@ -32,10 +32,53 @@ function startVideoStream() {
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
             video.srcObject = stream;
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
+            script.onload = function () {
+                onScriptLoad();
+            };
+            document.body.appendChild(script);
         })
         .catch(err => {
             console.error('Error accessing webcam:', err);
         });
+}
+
+// FaceMesh 라이브러리 스크립트 로드 후 실행될 함수
+function onScriptLoad() {
+    // Mediapipe 얼굴 랜드마크 감지 함수
+    async function onResults(results) {
+        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            const landmarks = results.multiFaceLandmarks[0];
+            // 필요에 따라 landmarks를 처리하거나 저장할 수 있습니다.
+            console.log('Landmarks detected:', landmarks);
+
+            // 얼굴이 감지되면 사진을 찍는 함수 호출
+            captureButton.click();
+            console.log("capture button 클릭")
+        } else {
+            console.log('No face detected');
+        }
+    }
+
+    // Mediapipe FaceMesh 설정
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        }
+    });
+    faceMesh.setOptions({
+        maxNumFaces: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    faceMesh.onResults(onResults);
+
+    // 웹캠 비디오 스트림 연결
+    // faceMesh.send({ image: video });
+    setInterval(() => {
+        faceMesh.send({ image: video });
+    }, 500);
 }
 
 // 웹캠 비디오 스트림 시작

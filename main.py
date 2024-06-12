@@ -42,19 +42,34 @@ def check_image_angles(faces):
         nose = landmarks[54]
         
         # 눈 사이의 거리 계산
-        dx = right_eye[0] - left_eye[0]
-        dy = right_eye[1] - left_eye[1]
+        eye_dx = right_eye[0] - left_eye[0]
+        eye_dy = right_eye[1] - left_eye[1]
+        
+        # 코와 왼쪽 눈 사이의 거리 계산
+        nose_left_eye_dx = nose[0] - left_eye[0]
+        nose_left_eye_dy = nose[1] - left_eye[1]
+        
+        # 코와 오른쪽 눈 사이의 거리 계산
+        nose_right_eye_dx = nose[0] - right_eye[0]
+        nose_right_eye_dy = nose[1] - right_eye[1]
         
         # 눈 사이의 각도 계산 (라디안을 도로 변환)
-        angle = np.arctan2(dy, dx) * 180 / np.pi
+        eye_angle = np.arctan2(eye_dy, eye_dx) * 180 / np.pi
         
+        # 코와 눈 사이의 각도 계산 (라디안을 도로 변환)
+        nose_left_eye_angle = np.arctan2(nose_left_eye_dy, nose_left_eye_dx) * 180 / np.pi
+        nose_right_eye_angle = np.arctan2(nose_right_eye_dy, nose_right_eye_dx) * 180 / np.pi
+
+        # 평균 각도 계산
+        avg_angle = (eye_angle + nose_left_eye_angle + nose_right_eye_angle) / 3
+
         # 각도를 기준으로 얼굴 방향 판단
-        print(f"Angle: {angle}")  # 각도 값을 로그로 출력
-        if -1 < angle < 2:
+        print(f"Eye Angle: {eye_angle}, Nose-Left Eye Angle: {nose_left_eye_angle}, Nose-Right Eye Angle: {nose_right_eye_angle}, Average Angle: {avg_angle}")  # 각도 값을 로그로 출력
+        if 60 < avg_angle < 70:
             return 'front'  # 정면
-        elif angle <= -1:
+        elif avg_angle <= 60:
             return 'left'   # 왼쪽
-        elif angle >= 2:
+        elif avg_angle >= 70:
             return 'right'  # 오른쪽
     return 'unknown'
 
@@ -101,6 +116,25 @@ async def check_similarity(image: str = Form(...), previous_image: str = Form(No
     
     return {"message": "Images are acceptable", "similarity": 0}
 
+@app.post("/check_angle/")
+async def check_angle(image: str = Form(...), step: int = Form(...)):
+    """각도 검사 엔드포인트"""
+    image_data = base64.b64decode(image.split(",")[1])
+    img = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
+    faces = face_app.get(img)
+
+    if not faces:
+        raise HTTPException(status_code=400, detail="No face detected")
+
+    angle = check_image_angles(faces)
+    if step == 1 and angle != 'front':
+        raise HTTPException(status_code=400, detail="Please take a front photo.")
+    elif step == 2 and angle != 'left':
+        raise HTTPException(status_code=400, detail="Please take a left side photo.")
+    elif step == 3 and angle != 'right':
+        raise HTTPException(status_code=400, detail="Please take a right side photo.")
+
+    return {"message": "Angle is correct"}
 
 @app.post("/register_user/")
 async def register_user(name: str = Form(...), front_image: str = Form(...), left_image: str = Form(...), right_image: str = Form(...)):
@@ -125,17 +159,11 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
     os.makedirs(f'data/users/{user_name}', exist_ok=True)
     images = [front_image, left_image, right_image]
     embeddings = []
-    angles = {'front': 0, 'left': 0, 'right': 0}
 
     # 각 이미지를 디코딩하여 저장 및 임베딩 생성
     for i, image in enumerate(images, start=1):
         # base64 인코딩된 이미지를 디코딩
         image_data = base64.b64decode(image.split(",")[1])
-        
-        # 디코딩된 이미지를 파일로 저장
-        image_path = f'data/users/{user_name}/image{i}.png'
-        with open(image_path, "wb") as f:
-            f.write(image_data)
         
         # 저장된 이미지를 다시 읽어 OpenCV 형식으로 변환
         img = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
@@ -147,16 +175,12 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
         if not faces:
             raise HTTPException(status_code=400, detail="No face detected in one of the images")
 
-        angle = check_image_angles(faces)
-        print(f"Image {i}: {angle}")  # 각 이미지의 각도 값을 로그로 출력
-        if angle == 'unknown':
-            raise HTTPException(status_code=400, detail="Image angle could not be determined")
-        angles[angle] += 1
-
         embeddings.append(faces[0].normed_embedding.tolist())
-
-    if angles['front'] != 1 or angles['left'] != 1 or angles['right'] != 1:
-        raise HTTPException(status_code=400, detail="Images must include front, left, and right sides")
+        
+        # 디코딩된 이미지를 파일로 저장 (각도가 맞았을 때만 저장)
+        image_path = f'data/users/{user_name}/image{i}.png'
+        with open(image_path, "wb") as f:
+            f.write(image_data)
 
     user_data = {"name": user_name, "embeddings": embeddings}
     user_file = f"data/users/{user_name}.json"

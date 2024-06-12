@@ -136,9 +136,9 @@ captureButton.addEventListener('click', () => {
                 } else if (currentAttendanceStatus === AttendanceStatus.OFF_DUTY) {
                     addExit(`${currentUserName} - 퇴근`, now);
                 } else if (currentAttendanceStatus === AttendanceStatus.OUT_FOR_WORK) {
-                    addEntry(`${currentUserName} - 외출`, now);
+                    addOutForWork(`${currentUserName} - 외출`, now);
                 } else if (currentAttendanceStatus === AttendanceStatus.BACK_TO_WORK) {
-                    addEntry(`${currentUserName} - 복귀`, now);
+                    addBackToWork(`${currentUserName} - 복귀`, now);
                 }
                 // 추가
                 confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
@@ -208,6 +208,28 @@ function calculateTotalTime(entryTime, exitTime) {
 
 /////// 가람 추가
 // ============================가람 추가=============================
+
+// 외출 기록 추가 함수
+function addOutForWork(name, outTime) {
+    const timeString = outTime.toLocaleTimeString();
+    const entry = document.createElement('li');
+    entry.textContent = `${name} - ${timeString} (외출)`;
+    entry.setAttribute('data-name', name);
+    entry.setAttribute('data-out-time', outTime.toISOString());
+    entriesList.appendChild(entry);
+}
+
+// 복귀 기록 추가 함수
+function addBackToWork(name, backTime) {
+    const entry = document.querySelector(`#entries li[data-name="${name}"]`);
+    if (entry) {
+        const outTime = new Date(entry.getAttribute('data-out-time'));
+        const timeString = backTime.toLocaleTimeString();
+        const totalTime = calculateTotalTime(outTime, backTime);
+        entry.textContent += ` / ${timeString} (복귀) - 외출 시간: ${totalTime}`;
+        entry.setAttribute('data-back-time', backTime.toISOString());
+    }
+}
 
 // 출퇴근 상태
 const AttendanceStatus = {

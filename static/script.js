@@ -110,18 +110,18 @@ captureButton.addEventListener('click', () => {
         if (response.ok) {
             const result = await response.json();
             currentUserName = result.name;
-            confirmationMessage.textContent = `${currentUserName}님, 원하시는 작업을 선택하세요.`;
-            confirmationModal.style.display = 'block';
+            // confirmationMessage.textContent = `${currentUserName}님, 원하시는 작업을 선택하세요.`;
+            // confirmationModal.style.display = 'block';
             // currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
-            // // 이미 퇴근한 사용자인지 확인
-            // const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
-            // if (alreadyExited) {
-            //     alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
-            //     alreadyExitedModal.style.display = 'block';
-            // } else {
-            //     confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
-            //     confirmationModal.style.display = 'block';
-            // }
+            // 이미 퇴근한 사용자인지 확인
+            const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
+            if (alreadyExited) {
+                alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
+                alreadyExitedModal.style.display = 'block';
+            } else {
+                confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
+                confirmationModal.style.display = 'block';
+            }
         } else if (response.status === 404) {
             alert('등록된 사용자가 없어 사용자 등록 페이지로 이동합니다.');
             window.location.href = "/register";
@@ -131,56 +131,57 @@ captureButton.addEventListener('click', () => {
         }
     }, 'image/jpeg');
 });
-// 확인 버튼 클릭 이벤트 핸들러
-confirmButton.addEventListener('click', () => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    if (currentUserInEntryList) {
-        addExit(currentUserName, now);
-    } else {
-        addEntry(currentUserName, now);
-    }
-    confirmationModal.style.display = 'none';
-    currentUserName = '';
-    currentUserInEntryList = false;
-});
-// 취소 버튼 클릭 이벤트 핸들러
-cancelButton.addEventListener('click', () => {
-    confirmationModal.style.display = 'none';
-    currentUserName = '';
-    currentUserInEntryList = false;
-});
-// 이미 퇴근한 사용자 확인 버튼 클릭 이벤트 핸들러
-alreadyExitedConfirmButton.addEventListener('click', () => {
-    alreadyExitedModal.style.display = 'none';
-});
-// 출근 기록 추가 함수
-function addEntry(name, time) {
-    const timeString = time.toLocaleTimeString();
-    const entry = document.createElement('li');
-    entry.textContent = `${name} - ${timeString} (출근)`;
-    entry.setAttribute('data-name', name);
-    entry.setAttribute('data-entry-time', time.toISOString());
-    entriesList.appendChild(entry);
-}
-// 퇴근 기록 추가 함수
-function addExit(name, exitTime) {
-    const entry = document.querySelector(`#entries li[data-name="${name}"]`);
-    if (entry) {
-        const entryTime = new Date(entry.getAttribute('data-entry-time'));
-        const timeString = exitTime.toLocaleTimeString();
-        const totalTime = calculateTotalTime(entryTime, exitTime);
-        entry.textContent += ` / ${timeString} (퇴근) - 총 근무시간: ${totalTime}`;
-        entry.setAttribute('data-exit-time', exitTime.toISOString());
-    }
-}
-// 총 근무시간 계산 함수
-function calculateTotalTime(entryTime, exitTime) {
-    const diff = exitTime - entryTime;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}시간 ${minutes}분`;
-}
+
+// // 확인 버튼 클릭 이벤트 핸들러
+// confirmButton.addEventListener('click', () => {
+//     const now = new Date();
+//     const timeString = now.toLocaleTimeString();
+//     if (currentUserInEntryList) {
+//         addExit(currentUserName, now);
+//     } else {
+//         addEntry(currentUserName, now);
+//     }
+//     confirmationModal.style.display = 'none';
+//     currentUserName = '';
+//     currentUserInEntryList = false;
+// });
+// // 취소 버튼 클릭 이벤트 핸들러
+// cancelButton.addEventListener('click', () => {
+//     confirmationModal.style.display = 'none';
+//     currentUserName = '';
+//     currentUserInEntryList = false;
+// });
+// // 이미 퇴근한 사용자 확인 버튼 클릭 이벤트 핸들러
+// alreadyExitedConfirmButton.addEventListener('click', () => {
+//     alreadyExitedModal.style.display = 'none';
+// });
+// // 출근 기록 추가 함수
+// function addEntry(name, time) {
+//     const timeString = time.toLocaleTimeString();
+//     const entry = document.createElement('li');
+//     entry.textContent = `${name} - ${timeString} (출근)`;
+//     entry.setAttribute('data-name', name);
+//     entry.setAttribute('data-entry-time', time.toISOString());
+//     entriesList.appendChild(entry);
+// }
+// // 퇴근 기록 추가 함수
+// function addExit(name, exitTime) {
+//     const entry = document.querySelector(`#entries li[data-name="${name}"]`);
+//     if (entry) {
+//         const entryTime = new Date(entry.getAttribute('data-entry-time'));
+//         const timeString = exitTime.toLocaleTimeString();
+//         const totalTime = calculateTotalTime(entryTime, exitTime);
+//         entry.textContent += ` / ${timeString} (퇴근) - 총 근무시간: ${totalTime}`;
+//         entry.setAttribute('data-exit-time', exitTime.toISOString());
+//     }
+// }
+// // 총 근무시간 계산 함수
+// function calculateTotalTime(entryTime, exitTime) {
+//     const diff = exitTime - entryTime;
+//     const hours = Math.floor(diff / (1000 * 60 * 60));
+//     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+//     return `${hours}시간 ${minutes}분`;
+// }
 
 
 // 가람 추가
@@ -193,13 +194,90 @@ document.getElementById('comeBackButton').addEventListener('click', () => handle
 function handleAttendance(action) {
     const now = new Date();
     const timeString = now.toLocaleTimeString();
-    const entry = document.createElement('li');
-    entry.textContent = `${currentUserName} - ${timeString} (${action})`;
-    entry.setAttribute('data-name', currentUserName);
-    entry.setAttribute('data-action', action);
-    entry.setAttribute('data-time', now.toISOString());
-    entriesList.appendChild(entry);
+    const entry = findOrCreateEntry(currentUserName, action);
+    if (action === '퇴근' || action === '복귀') {
+        const startAction = action === '퇴근' ? '출근' : '외출';
+        const startTime = findLastActionTime(currentUserName, startAction);
+        if (startTime) {
+            const totalTime = calculateTimeDifference(startTime, now);
+            entry.querySelector('.total-time').textContent = `총 시간: ${totalTime}`;
+        }
+    }
+    entry.querySelector(`.${action}`).textContent = `${timeString} (${action})`;
+    confirmationModal.style.display = 'none';
+    isFaceDetected = false;
+}
+
+function findOrCreateEntry(name, action) {
+    let entry = document.querySelector(`#entries li[data-name="${name}"]`);
+    if (!entry) {
+        entry = document.createElement('li');
+        entry.setAttribute('data-name', name);
+        entry.innerHTML = `<span class="name">${name}</span> 
+                            <span class="출근"></span> 
+                             - <span class="퇴근"></span> 
+                            <br>
+                            <span class="외출"></span> 
+                             - <span class="복귀"></span> 
+                            <span class="total-time"></span>`;
+        entriesList.appendChild(entry);
+    }
+    return entry;
+}
+
+// function handleAttendance(action) {
+//     const now = new Date();
+//     const timeString = now.toLocaleTimeString();
+//     const entry = document.createElement('li');
+//     entry.textContent = `${currentUserName} - ${timeString} (${action})`;
+//     entry.setAttribute('data-name', currentUserName);
+//     entry.setAttribute('data-action', action);
+//     entry.setAttribute('data-time', now.toISOString());
+//     entriesList.appendChild(entry);
+//     confirmationModal.style.display = 'none';
+
+//     // 출근/퇴근 또는 외출/복귀 짝을 지어 근무시간 및 외출시간 계산
+//     if (action === '퇴근') {
+//         const entryTime = findLastActionTime(currentUserName, '출근');
+//         if (entryTime) {
+//             const totalTime = calculateTimeDifference(entryTime, now);
+//             entry.textContent += ` - 총 근무시간: ${totalTime}`;
+//         }
+//     } else if (action === '복귀') {
+//         const goOutTime = findLastActionTime(currentUserName, '외출');
+//         if (goOutTime) {
+//             const totalOutTime = calculateTimeDifference(goOutTime, now);
+//             entry.textContent += ` - 총 외출시간: ${totalOutTime}`;
+//         }
+//     }
+
+//     currentUserName = '';
+//     currentUserInEntryList = false;
+
+// }
+
+function findLastActionTime(name, action) {
+    const entries = document.querySelectorAll(`#entries li[data-name="${name}"][data-action="${action}"]`);
+    if (entries.length > 0) {
+        const lastEntry = entries[entries.length - 1];
+        return new Date(lastEntry.getAttribute('data-time'));
+    }
+    return null;
+}
+
+function calculateTimeDifference(startTime, endTime) {
+    const diff = endTime - startTime;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}시간 ${minutes}분`;
+}
+
+cancelButton.addEventListener('click', () => {
     confirmationModal.style.display = 'none';
     currentUserName = '';
     currentUserInEntryList = false;
-}
+});
+
+alreadyExitedConfirmButton.addEventListener('click', () => {
+    alreadyExitedModal.style.display = 'none';
+});

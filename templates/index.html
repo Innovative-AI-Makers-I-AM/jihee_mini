@@ -37,16 +37,29 @@
         </section>
     </main>
 
-    <!-- 출근/퇴근 확인 모달 -->
+    <!-- 출근/퇴근/외출/복귀 확인 모달 -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <!-- 확인 메시지 -->
             <p id="confirmationMessage"></p>
-            <!-- 확인 및 취소 버튼 -->
-            <button id="confirmButton" class="button">네</button>
-            <button id="cancelButton" class="button cancel">아니요</button>
+            <!-- 출근/퇴근/외출/복귀 버튼 -->
+            <button id="startWorkButton" class="button">출근</button>
+            <button id="endWorkButton" class="button">퇴근</button>
+            <button id="goOutButton" class="button">외출</button>
+            <button id="comeBackButton" class="button">복귀</button>
         </div>
     </div>
+
+    <!-- 출근/퇴근 확인 모달 -->
+    <!-- <div id="confirmationModal" class="modal"> -->
+        <!-- <div class="modal-content"> -->
+            <!-- 확인 메시지 -->
+            <!-- <p id="confirmationMessage"></p> -->
+            <!-- 확인 및 취소 버튼 -->
+            <!-- <button id="confirmButton" class="button">네</button>
+            <button id="cancelButton" class="button cancel">아니요</button>
+        </div>
+    </div> -->
 
     <!-- 이미 퇴근한 사용자에 대한 모달 -->
     <div id="alreadyExitedModal" class="modal">

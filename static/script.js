@@ -17,13 +17,19 @@ const resultDiv = document.getElementById('result');
 const entriesList = document.getElementById('entries');
 const confirmationModal = document.getElementById('confirmationModal');
 const confirmationMessage = document.getElementById('confirmationMessage');
-const confirmButton = document.getElementById('confirmButton');
+// const confirmButton = document.getElementById('confirmButton');
 const cancelButton = document.getElementById('cancelButton');
 const alreadyExitedModal = document.getElementById('alreadyExitedModal');
 const alreadyExitedMessage = document.getElementById('alreadyExitedMessage');
 const alreadyExitedConfirmButton = document.getElementById('alreadyExitedConfirmButton');
 let currentUserName = '';
 let currentUserInEntryList = false;
+
+const startWorkButton = document.getElementById('startWorkButton');
+const endWorkButton = document.getElementById('endWorkButton');
+const goOutButton = document.getElementById('goOutButton');
+const comeBackButton = document.getElementById('comeBackButton');
+
 // 웹캠 비디오 스트림을 시작하는 함수
 function startVideoStream() {
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -104,16 +110,18 @@ captureButton.addEventListener('click', () => {
         if (response.ok) {
             const result = await response.json();
             currentUserName = result.name;
-            currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
-            // 이미 퇴근한 사용자인지 확인
-            const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
-            if (alreadyExited) {
-                alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
-                alreadyExitedModal.style.display = 'block';
-            } else {
-                confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
-                confirmationModal.style.display = 'block';
-            }
+            confirmationMessage.textContent = `${currentUserName}님, 원하시는 작업을 선택하세요.`;
+            confirmationModal.style.display = 'block';
+            // currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
+            // // 이미 퇴근한 사용자인지 확인
+            // const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
+            // if (alreadyExited) {
+            //     alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
+            //     alreadyExitedModal.style.display = 'block';
+            // } else {
+            //     confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
+            //     confirmationModal.style.display = 'block';
+            // }
         } else if (response.status === 404) {
             alert('등록된 사용자가 없어 사용자 등록 페이지로 이동합니다.');
             window.location.href = "/register";
@@ -172,4 +180,26 @@ function calculateTotalTime(entryTime, exitTime) {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}시간 ${minutes}분`;
+}
+
+
+// 가람 추가
+// 확인 모달 창에 대한 버튼 이벤트 핸들러 추가
+document.getElementById('startWorkButton').addEventListener('click', () => handleAttendance('출근'));
+document.getElementById('endWorkButton').addEventListener('click', () => handleAttendance('퇴근'));
+document.getElementById('goOutButton').addEventListener('click', () => handleAttendance('외출'));
+document.getElementById('comeBackButton').addEventListener('click', () => handleAttendance('복귀'));
+
+function handleAttendance(action) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    const entry = document.createElement('li');
+    entry.textContent = `${currentUserName} - ${timeString} (${action})`;
+    entry.setAttribute('data-name', currentUserName);
+    entry.setAttribute('data-action', action);
+    entry.setAttribute('data-time', now.toISOString());
+    entriesList.appendChild(entry);
+    confirmationModal.style.display = 'none';
+    currentUserName = '';
+    currentUserInEntryList = false;
 }

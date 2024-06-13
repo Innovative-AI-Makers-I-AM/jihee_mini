@@ -4,8 +4,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 from routers import register, similarity, angle, identify
+from database import engine, Base
 
 app = FastAPI()
+
+# 데이터베이스 테이블 생성
+Base.metadata.create_all(bind=engine)
 
 # 정적 파일 및 템플릿 설정
 app.mount("/static", StaticFiles(directory="static"), name="static")

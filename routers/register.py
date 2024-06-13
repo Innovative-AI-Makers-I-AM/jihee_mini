@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Request, HTTPException #, FastAPI, File, UploadFile
+from fastapi import APIRouter, Form, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 import base64
 import os
@@ -6,8 +6,14 @@ import json
 import cv2
 import numpy as np
 from utils.face import face_app
-# from utils.file import save_user_images
 from fastapi.templating import Jinja2Templates
+from datetime import datetime
+from utils.time_utils import calculate_total_work_time
+from dependencies import get_current_user 
+from sqlalchemy.orm import Session
+from crud import check_in_user, check_out_user, leave_user, return_user
+from database import get_db
+from models.user import User
 
 router = APIRouter()
 
@@ -30,10 +36,8 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
         if not suffix:
             suffix = "A"
         else:
-            # chr() 함수는 ASCII 코드 값을 입력으로 받아 해당하는 문자를 반환하는 파이썬 내장 함수
-            # ord() 함수는 문자를 입력으로 받아 해당하는 ASCII 코드 값을 반환
             suffix = chr(ord(suffix) + 1)
-            if suffix > "Z":  # 알파벳이 모두 사용된 경우, 두 글자로 변환
+            if suffix > "Z":
                 suffix = "A" + chr(ord(suffix) + 1)
     
     user_name += suffix
@@ -44,22 +48,15 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
 
     # 각 이미지를 디코딩하여 저장 및 임베딩 생성
     for i, image in enumerate(images, start=1):
-        # base64 인코딩된 이미지를 디코딩
         image_data = base64.b64decode(image.split(",")[1])
-        
-        # 저장된 이미지를 다시 읽어 OpenCV 형식으로 변환
         img = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
-        
-        # 얼굴 인식을 수행
         faces = face_app.get(img)
         
-        # 이미지에서 얼굴을 감지하지 못한 경우 예외 발생
         if not faces:
             raise HTTPException(status_code=400, detail="No face detected in one of the images")
 
         embeddings.append(faces[0].normed_embedding.tolist())
         
-        # 디코딩된 이미지를 파일로 저장 (각도가 맞았을 때만 저장)
         image_path = f'data/users/{user_name}/image{i}.png'
         with open(image_path, "wb") as f:
             f.write(image_data)
@@ -70,3 +67,34 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
         json.dump(user_data, f)
 
     return {"message": "성공적으로 등록되었습니다."}
+
+def check_attendance(user: User = Depends(get_current_user)):
+    if not user.is_checked_in:
+        raise HTTPException(status_code=400, detail="You must check-in first")
+
+@router.post("/check-in")
+def check_in(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user.is_checked_in:
+        raise HTTPException(status_code=400, detail="Already checked in")
+    return check_in_user(db, user.id)
+
+@router.post("/check-out", dependencies=[Depends(check_attendance)])
+def check_out(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return check_out_user(db, user.id)
+
+@router.post("/leave", dependencies=[Depends(check_attendance)])
+def leave(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return leave_user(db, user.id)
+
+@router.post("/return", dependencies=[Depends(check_attendance)])
+def return_to_work(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return return_user(db, user.id)
+
+@router.get("/work-time")
+def get_work_time(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not user.check_in_time or not user.check_out_time:
+        raise HTTPException(status_code=400, detail="Incomplete work period")
+    leave_times = json.loads(user.leave_times or "[]")
+    return_times = json.loads(user.return_times or "[]")
+    total_work_time = calculate_total_work_time(user.check_in_time, user.check_out_time, leave_times, return_times)
+    return {"total_work_time": str(total_work_time)}

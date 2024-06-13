@@ -35,6 +35,17 @@
             <!-- 출퇴근 기록을 표시할 리스트 -->
             <ul id="entries" class="entry-list"></ul>
         </section>
+        <!-- 출퇴근 기능 버튼 -->
+        <section class="attendance-section">
+            <button onclick="checkIn()">출근</button>
+            <button onclick="checkOut()">퇴근</button>
+            <button onclick="leaveWork()">외출</button>
+            <button onclick="returnToWork()">복귀</button>
+            <button onclick="getWorkTime()">총 근무 시간 확인</button>
+        </section>
+        <!-- 메시지 및 총 근무 시간 표시 영역 -->
+        <div id="message"></div>
+        <div id="workTime"></div>
     </main>
 
     <!-- 출근/퇴근 확인 모달 -->
@@ -57,5 +68,37 @@
             <button id="alreadyExitedConfirmButton" class="button">확인</button>
         </div>
     </div>
+
+    <script>
+        async function checkIn() {
+            const response = await fetch('/check-in', { method: 'POST' });
+            const message = await response.json();
+            document.getElementById('message').innerText = message.detail || message.message;
+        }
+
+        async function checkOut() {
+            const response = await fetch('/check-out', { method: 'POST' });
+            const message = await response.json();
+            document.getElementById('message').innerText = message.detail || message.message;
+        }
+
+        async function leaveWork() {
+            const response = await fetch('/leave', { method: 'POST' });
+            const message = await response.json();
+            document.getElementById('message').innerText = message.detail || message.message;
+        }
+
+        async function returnToWork() {
+            const response = await fetch('/return', { method: 'POST' });
+            const message = await response.json();
+            document.getElementById('message').innerText = message.detail || message.message;
+        }
+
+        async function getWorkTime() {
+            const response = await fetch('/work-time', { method: 'GET' });
+            const data = await response.json();
+            document.getElementById('workTime').innerText = data.total_work_time || data.detail;
+        }
+    </script>
 </body>
 </html>

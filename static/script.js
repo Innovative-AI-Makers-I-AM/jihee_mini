@@ -1,30 +1,29 @@
-// 현재 날짜를 yyyy.mm.dd 형식으로 반환하는 함수
-function getCurrentDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
-}
-// 페이지가 로드될 때 출퇴근 기록 제목에 현재 날짜 추가
+// DOMContentLoaded => 웹 페이지가 로드되 때 발생하는 이벤트
 document.addEventListener('DOMContentLoaded', () => {
+    // HTML에 ID가 recordTitle인 HTML 요소를 가져온다.
     const recordTitle = document.getElementById('recordTitle');
+    // 해당 요소에 textContent를 가져와서 현재 날짜를 추가한다.
     recordTitle.textContent += ` (${getCurrentDate()})`;
+    loadEntries();
 });
+
 const video = document.getElementById('video');
 const captureButton = document.getElementById('capture');
 const resultDiv = document.getElementById('result');
 const entriesList = document.getElementById('entries');
 const confirmationModal = document.getElementById('confirmationModal');
 const confirmationMessage = document.getElementById('confirmationMessage');
-const confirmButton = document.getElementById('confirmButton');
+const entryButton = document.getElementById('entryButton');
+const outgoingButton = document.getElementById('outgoingButton');
+const returningButton = document.getElementById('returningButton');
+const exitButton = document.getElementById('exitButton');
 const cancelButton = document.getElementById('cancelButton');
 const alreadyExitedModal = document.getElementById('alreadyExitedModal');
 const alreadyExitedMessage = document.getElementById('alreadyExitedMessage');
 const alreadyExitedConfirmButton = document.getElementById('alreadyExitedConfirmButton');
 let currentUserName = '';
-let currentUserInEntryList = false;
-// 웹캠 비디오 스트림을 시작하는 함수
+let isFaceDetected = false;
+
 function startVideoStream() {
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
@@ -40,31 +39,19 @@ function startVideoStream() {
             console.error('Error accessing webcam:', err);
         });
 }
-let isFaceDetected = false;
 
-// FaceMesh 라이브러리 스크립트 로드 후 실행될 함수
 function onScriptLoad() {
-    // Mediapipe 얼굴 랜드마크 감지 함수
     async function onResults(results) {
         if (!isFaceDetected && results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-            isFaceDetected = true; // 얼굴이 감지되면 플래그를 true로 설정
-            const landmarks = results.multiFaceLandmarks[0];
-            // 필요에 따라 landmarks를 처리하거나 저장할 수 있습니다.
-            console.log('Landmarks detected:', landmarks);
-
-            // 얼굴이 감지되면 사진을 찍는 함수 호출
-            captureButton.click();
-            console.log("capture button 클릭")
+            isFaceDetected = true;
+            handleFaceRecognition();
         } else {
             console.log('No face detected');
         }
     }
 
-    // Mediapipe FaceMesh 설정
     const faceMesh = new FaceMesh({
-        locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-        }
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
     });
     faceMesh.setOptions({
         maxNumFaces: 1,
@@ -73,30 +60,23 @@ function onScriptLoad() {
     });
     faceMesh.onResults(onResults);
 
-    // 웹캠 비디오 스트림 연결
-    // faceMesh.send({ image: video });
     setInterval(() => {
-        if (!isFaceDetected) { // 얼굴이 감지되지 않았을 때만 얼굴 감지 요청
+        if (!isFaceDetected) {
             faceMesh.send({ image: video });
         }
     }, 500);
 }
 
-// 웹캠 비디오 스트림 시작
 startVideoStream();
 
-// 캡처 버튼 클릭 이벤트 핸들러
-captureButton.addEventListener('click', () => {
-    // 캔버스를 생성하여 비디오에서 이미지 캡처
+async function handleFaceRecognition() {
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
-    // 캡처한 이미지를 Blob 형식으로 변환
     canvas.toBlob(async (blob) => {
         const formData = new FormData();
         formData.append('file', blob);
-        // 서버로 이미지 업로드 및 사용자 인식 요청
         const response = await fetch('/identify_user/', {
             method: 'POST',
             body: formData
@@ -104,16 +84,7 @@ captureButton.addEventListener('click', () => {
         if (response.ok) {
             const result = await response.json();
             currentUserName = result.name;
-            currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
-            // 이미 퇴근한 사용자인지 확인
-            const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
-            if (alreadyExited) {
-                alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
-                alreadyExitedModal.style.display = 'block';
-            } else {
-                confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
-                confirmationModal.style.display = 'block';
-            }
+            showModalBasedOnState();
         } else if (response.status === 404) {
             alert('등록된 사용자가 없어 사용자 등록 페이지로 이동합니다.');
             window.location.href = "/register";
@@ -122,54 +93,181 @@ captureButton.addEventListener('click', () => {
             resultDiv.innerHTML = `<p>${result.detail}</p>`;
         }
     }, 'image/jpeg');
-});
-// 확인 버튼 클릭 이벤트 핸들러
-confirmButton.addEventListener('click', () => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    if (currentUserInEntryList) {
-        addExit(currentUserName, now);
-    } else {
-        addEntry(currentUserName, now);
+}
+
+function showModalBasedOnState() {
+    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
+    const todayEntries = entries.filter(entry => entry.name === currentUserName && entry.date === getCurrentDate());
+
+    entryButton.style.display = 'none';
+    outgoingButton.style.display = 'none';
+    returningButton.style.display = 'none';
+    exitButton.style.display = 'none';
+
+    if (todayEntries.length === 0) {
+        entryButton.style.display = 'inline-block';
+        confirmationMessage.textContent = `${currentUserName}님 출근하시겠습니까?`;
+    } else if (todayEntries.length === 1 && todayEntries[0].type === '출근') {
+        outgoingButton.style.display = 'inline-block';
+        exitButton.style.display = 'inline-block';
+        confirmationMessage.textContent = `${currentUserName}님 외출 또는 퇴근하시겠습니까?`;
+    } else if (todayEntries.length === 2 && todayEntries[1].type === '외출') {
+        returningButton.style.display = 'inline-block';
+        exitButton.style.display = 'inline-block';
+        confirmationMessage.textContent = `${currentUserName}님 복귀 또는 퇴근하시겠습니까?`;
+    } else if (todayEntries.length === 3 && todayEntries[2].type === '복귀') {
+        exitButton.style.display = 'inline-block';
+        confirmationMessage.textContent = `${currentUserName}님 퇴근하시겠습니까?`;
+    } else if (todayEntries.length >= 4 && todayEntries[todayEntries.length - 1].type === '퇴근') {
+        return; // 퇴근 상태면 모달을 띄우지 않음
     }
-    confirmationModal.style.display = 'none';
-    currentUserName = '';
-    currentUserInEntryList = false;
-});
-// 취소 버튼 클릭 이벤트 핸들러
+
+    confirmationModal.style.display = 'block';
+}
+
+entryButton.addEventListener('click', () => handleAction('출근'));
+outgoingButton.addEventListener('click', () => handleAction('외출'));
+returningButton.addEventListener('click', () => handleAction('복귀'));
+exitButton.addEventListener('click', () => handleAction('퇴근'));
 cancelButton.addEventListener('click', () => {
     confirmationModal.style.display = 'none';
-    currentUserName = '';
-    currentUserInEntryList = false;
+    isFaceDetected = false;
 });
-// 이미 퇴근한 사용자 확인 버튼 클릭 이벤트 핸들러
-alreadyExitedConfirmButton.addEventListener('click', () => {
-    alreadyExitedModal.style.display = 'none';
-});
-// 출근 기록 추가 함수
-function addEntry(name, time) {
-    const timeString = time.toLocaleTimeString();
-    const entry = document.createElement('li');
-    entry.textContent = `${name} - ${timeString} (출근)`;
-    entry.setAttribute('data-name', name);
-    entry.setAttribute('data-entry-time', time.toISOString());
-    entriesList.appendChild(entry);
-}
-// 퇴근 기록 추가 함수
-function addExit(name, exitTime) {
-    const entry = document.querySelector(`#entries li[data-name="${name}"]`);
-    if (entry) {
-        const entryTime = new Date(entry.getAttribute('data-entry-time'));
-        const timeString = exitTime.toLocaleTimeString();
-        const totalTime = calculateTotalTime(entryTime, exitTime);
-        entry.textContent += ` / ${timeString} (퇴근) - 총 근무시간: ${totalTime}`;
-        entry.setAttribute('data-exit-time', exitTime.toISOString());
+
+function handleAction(type) {
+    const now = new Date();
+    addEntry(currentUserName, now, type);
+    confirmationModal.style.display = 'none';
+    isFaceDetected = false;
+    if (type === '퇴근') {
+        isFaceDetected = true;
     }
 }
+
+function addEntry(name, time, type) {
+    const timeString = time.toLocaleTimeString();
+    const entry = {
+        name: name,
+        timeString: timeString,
+        type: type,
+        entryTime: time.toISOString(),
+        date: getCurrentDate()
+    };
+    saveEntry(entry);
+    loadEntries();
+}
+
+function loadEntries() {
+    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
+    const usersMap = new Map();
+
+    // 사용자 이름을 기준으로 그룹화
+    entries.forEach(entry => {
+        const key = entry.name;
+        const value = {
+            timeString: entry.timeString,
+            type: entry.type,
+            entryTime: entry.entryTime,
+            exitTime: entry.exitTime
+        };
+        if (usersMap.has(key)) {
+            usersMap.get(key).push(value);
+        } else {
+            usersMap.set(key, [value]);
+        }
+    });
+
+    entriesList.innerHTML = '';
+
+    // 각 사용자별로 출퇴근 기록을 한 줄에 표시
+    usersMap.forEach((entries, name) => {
+        let totalWorkTime = 0;
+        let lastEntryTime = null;
+        let lastExitTime = null;
+        let lastOutgoingTime = null;
+
+        const li = document.createElement('li');
+        li.textContent = `${name}: `;
+        entries.forEach((entry, index) => {
+            if (entry.type === '출근') {
+                lastEntryTime = new Date(entry.entryTime);
+            } else if (entry.type === '퇴근') {
+                lastExitTime = new Date(entry.exitTime);
+            } else if (entry.type === '외출') {
+                lastOutgoingTime = new Date(entry.entryTime);
+            } else if (entry.type === '복귀' && lastOutgoingTime) {
+                totalWorkTime += new Date(entry.entryTime) - lastOutgoingTime;
+                lastOutgoingTime = null;
+            }
+
+            li.textContent += `${entry.timeString} (${entry.type})`;
+            if (index !== entries.length - 1) {
+                li.textContent += ', ';
+            }
+        });
+
+        if (lastEntryTime && lastExitTime) {
+            totalWorkTime += lastExitTime - lastEntryTime;
+        }
+
+        li.textContent += ` - 총 근무시간: ${formatTime(totalWorkTime)}`;
+        entriesList.appendChild(li);
+    });
+}
+
+
+function saveEntry(entry) {
+    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
+    entries.push(entry);
+    localStorage.setItem('attendanceEntries', JSON.stringify(entries));
+}
+
+// 현재 날짜 반환 함수
+function getCurrentDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+}
+
 // 총 근무시간 계산 함수
-function calculateTotalTime(entryTime, exitTime) {
-    const diff = exitTime - entryTime;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+function calculateTotalWorkTime(entries) {
+    let totalWorkTime = 0;
+    let lastEntryTime = null;
+    let totalOutgoingTime = 0;
+
+    entries.forEach(entry => {
+        if (entry.type === '출근') {
+            lastEntryTime = new Date(entry.entryTime);
+        } else if (entry.type === '외출' && lastEntryTime) {
+            const outgoingTime = new Date(entry.entryTime);
+            totalWorkTime += outgoingTime - lastEntryTime;
+            lastEntryTime = null;
+        } else if (entry.type === '복귀') {
+            lastEntryTime = new Date(entry.entryTime);
+        } else if (entry.type === '퇴근' && lastEntryTime) {
+            const exitTime = new Date(entry.entryTime);
+            totalWorkTime += exitTime - lastEntryTime;
+        }
+    });
+
+    return formatTime(totalWorkTime);
+}
+
+function formatTime(milliseconds) {
+    const totalMinutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
     return `${hours}시간 ${minutes}분`;
+}
+
+function updateWorkTime(entries) {
+    const todayEntries = entries.filter(entry => entry.name === currentUserName && entry.date === getCurrentDate());
+    if (todayEntries.length >= 4 && todayEntries[todayEntries.length - 1].type === '퇴근') {
+        const totalWorkTime = calculateTotalWorkTime(todayEntries);
+        todayEntries[todayEntries.length - 1].totalWorkTime = totalWorkTime;
+        localStorage.setItem('attendanceEntries', JSON.stringify(entries));
+        loadEntries();
+    }
 }

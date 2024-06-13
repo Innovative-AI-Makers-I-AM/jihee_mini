@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 import os
 from routers import register, similarity, angle, identify
 from database import engine, Base
+from models import user
 
 app = FastAPI()
 
@@ -33,6 +34,6 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-Base.metadata.create_all(bind=engine)
+user.Base.metadata.create_all(bind=engine)
 
 app.include_router(register.router)

@@ -14,6 +14,8 @@ from sqlalchemy.orm import Session
 from crud import check_in_user, check_out_user, leave_user, return_user
 from database import get_db
 from models.user import User
+from fastapi import APIRouter, Depends, HTTPException
+import models, schemas
 
 router = APIRouter()
 
@@ -23,6 +25,14 @@ templates = Jinja2Templates(directory="templates")
 async def register_page(request: Request):
     '''회원가입 페이지로 접근 시 register.html 템플릿 렌더링'''
     return templates.TemplateResponse("register.html", {"request": request})
+
+@router.post("/register", response_model=schemas.User)
+def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = models.User(name=user.name, embeddings=user.embeddings)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 @router.post("/register_user/")
 async def register_user(name: str = Form(...), front_image: str = Form(...), left_image: str = Form(...), right_image: str = Form(...)):

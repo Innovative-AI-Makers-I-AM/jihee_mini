@@ -107,23 +107,22 @@ function showModalBasedOnState() {
     if (todayEntries.length === 0) {
         entryButton.style.display = 'inline-block';
         confirmationMessage.textContent = `${currentUserName}님 출근하시겠습니까?`;
-    } else if (todayEntries.length === 1 && todayEntries[0].type === '출근') {
-        outgoingButton.style.display = 'inline-block';
-        exitButton.style.display = 'inline-block';
-        confirmationMessage.textContent = `${currentUserName}님 외출 또는 퇴근하시겠습니까?`;
-    } else if (todayEntries.length === 2 && todayEntries[1].type === '외출') {
-        returningButton.style.display = 'inline-block';
-        exitButton.style.display = 'inline-block';
-        confirmationMessage.textContent = `${currentUserName}님 복귀 또는 퇴근하시겠습니까?`;
-    } else if (todayEntries.length === 3 && todayEntries[2].type === '복귀') {
-        exitButton.style.display = 'inline-block';
-        confirmationMessage.textContent = `${currentUserName}님 퇴근하시겠습니까?`;
-    } else if (todayEntries.length >= 4 && todayEntries[todayEntries.length - 1].type === '퇴근') {
-        return; // 퇴근 상태면 모달을 띄우지 않음
+    } else {
+        const lastEntry = todayEntries[todayEntries.length - 1];
+        if (lastEntry.type === '출근' || lastEntry.type === '복귀') {
+            outgoingButton.style.display = 'inline-block';
+            exitButton.style.display = 'inline-block';
+            confirmationMessage.textContent = `${currentUserName}님 외출 또는 퇴근하시겠습니까?`;
+        } else if (lastEntry.type === '외출') {
+            returningButton.style.display = 'inline-block';
+            exitButton.style.display = 'inline-block';
+            confirmationMessage.textContent = `${currentUserName}님 복귀 또는 퇴근하시겠습니까?`;
+        }
     }
 
     confirmationModal.style.display = 'block';
 }
+
 
 entryButton.addEventListener('click', () => handleAction('출근'));
 outgoingButton.addEventListener('click', () => handleAction('외출'));
@@ -204,8 +203,8 @@ function loadEntries() {
 function calculateTotalWorkTime(entries) {
     let totalWorkTime = 0;
     let lastEntryTime = null;
-    let lastOutgoingTime = null;
     let totalOutgoingTime = 0;
+    let lastOutgoingTime = null;
 
     entries.forEach(entry => {
         const entryTime = new Date(entry.entryTime);
@@ -214,17 +213,18 @@ function calculateTotalWorkTime(entries) {
             lastEntryTime = entryTime;
         } else if (entry.type === '외출') {
             lastOutgoingTime = entryTime;
-        } else if (entry.type === '복귀' && lastOutgoingTime) {
+        } else if (entry.type === '복귀' && lastOutgoingTime !== null) {
             totalOutgoingTime += entryTime - lastOutgoingTime;
             lastOutgoingTime = null;
         } else if (entry.type === '퇴근' && lastEntryTime) {
-            const exitTime = entryTime;
-            totalWorkTime = exitTime - lastEntryTime - totalOutgoingTime;
+            totalWorkTime += entryTime - lastEntryTime - totalOutgoingTime;
+            lastEntryTime = null; // 퇴근 후에는 새로운 출근 전까지 근무시간을 계산하지 않음
         }
     });
 
     return formatTime(totalWorkTime);
 }
+
 
 function formatTime(milliseconds) {
     const totalMinutes = Math.floor(milliseconds / 60000);

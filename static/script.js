@@ -157,6 +157,12 @@ function addEntry(name, time, type) {
     loadEntries();
 }
 
+function saveEntry(entry) {
+    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
+    entries.push(entry);
+    localStorage.setItem('attendanceEntries', JSON.stringify(entries));
+}
+
 function loadEntries() {
     const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
     const usersMap = new Map();
@@ -167,8 +173,7 @@ function loadEntries() {
         const value = {
             timeString: entry.timeString,
             type: entry.type,
-            entryTime: entry.entryTime,
-            exitTime: entry.exitTime
+            entryTime: entry.entryTime
         };
         if (usersMap.has(key)) {
             usersMap.get(key).push(value);
@@ -192,7 +197,7 @@ function loadEntries() {
             if (entry.type === '출근') {
                 lastEntryTime = new Date(entry.entryTime);
             } else if (entry.type === '퇴근') {
-                lastExitTime = new Date(entry.exitTime);
+                lastExitTime = new Date(entry.entryTime);
             } else if (entry.type === '외출') {
                 lastOutgoingTime = new Date(entry.entryTime);
             } else if (entry.type === '복귀' && lastOutgoingTime) {
@@ -215,23 +220,6 @@ function loadEntries() {
     });
 }
 
-
-function saveEntry(entry) {
-    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
-    entries.push(entry);
-    localStorage.setItem('attendanceEntries', JSON.stringify(entries));
-}
-
-// 현재 날짜 반환 함수
-function getCurrentDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
-}
-
-// 총 근무시간 계산 함수
 function calculateTotalWorkTime(entries) {
     let totalWorkTime = 0;
     let lastEntryTime = null;
@@ -271,3 +259,24 @@ function updateWorkTime(entries) {
         loadEntries();
     }
 }
+
+// 현재 날짜 반환 함수
+function getCurrentDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+}
+
+// 페이지를 떠나기 전에 비디오 스트림을 중지하는 이벤트 핸들러
+window.addEventListener('beforeunload', () => {
+    const stream = video.srcObject;
+    const tracks = stream.getTracks();
+
+    tracks.forEach(track => {
+        track.stop();
+    });
+
+    video.srcObject = null;
+});

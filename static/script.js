@@ -186,36 +186,17 @@ function loadEntries() {
 
     // 각 사용자별로 출퇴근 기록을 한 줄에 표시
     usersMap.forEach((entries, name) => {
-        let totalWorkTime = 0;
-        let lastEntryTime = null;
-        let lastExitTime = null;
-        let lastOutgoingTime = null;
-
         const li = document.createElement('li');
         li.textContent = `${name}: `;
         entries.forEach((entry, index) => {
-            if (entry.type === '출근') {
-                lastEntryTime = new Date(entry.entryTime);
-            } else if (entry.type === '퇴근') {
-                lastExitTime = new Date(entry.entryTime);
-            } else if (entry.type === '외출') {
-                lastOutgoingTime = new Date(entry.entryTime);
-            } else if (entry.type === '복귀' && lastOutgoingTime) {
-                totalWorkTime += new Date(entry.entryTime) - lastOutgoingTime;
-                lastOutgoingTime = null;
-            }
-
             li.textContent += `${entry.timeString} (${entry.type})`;
             if (index !== entries.length - 1) {
                 li.textContent += ', ';
             }
         });
 
-        if (lastEntryTime && lastExitTime) {
-            totalWorkTime += lastExitTime - lastEntryTime;
-        }
-
-        li.textContent += ` - 총 근무시간: ${formatTime(totalWorkTime)}`;
+        const totalWorkTime = calculateTotalWorkTime(entries);
+        li.textContent += ` - 총 근무시간: ${totalWorkTime}`;
         entriesList.appendChild(li);
     });
 }
@@ -223,20 +204,22 @@ function loadEntries() {
 function calculateTotalWorkTime(entries) {
     let totalWorkTime = 0;
     let lastEntryTime = null;
+    let lastOutgoingTime = null;
     let totalOutgoingTime = 0;
 
     entries.forEach(entry => {
+        const entryTime = new Date(entry.entryTime);
+
         if (entry.type === '출근') {
-            lastEntryTime = new Date(entry.entryTime);
-        } else if (entry.type === '외출' && lastEntryTime) {
-            const outgoingTime = new Date(entry.entryTime);
-            totalWorkTime += outgoingTime - lastEntryTime;
-            lastEntryTime = null;
-        } else if (entry.type === '복귀') {
-            lastEntryTime = new Date(entry.entryTime);
+            lastEntryTime = entryTime;
+        } else if (entry.type === '외출') {
+            lastOutgoingTime = entryTime;
+        } else if (entry.type === '복귀' && lastOutgoingTime) {
+            totalOutgoingTime += entryTime - lastOutgoingTime;
+            lastOutgoingTime = null;
         } else if (entry.type === '퇴근' && lastEntryTime) {
-            const exitTime = new Date(entry.entryTime);
-            totalWorkTime += exitTime - lastEntryTime;
+            const exitTime = entryTime;
+            totalWorkTime = exitTime - lastEntryTime - totalOutgoingTime;
         }
     });
 

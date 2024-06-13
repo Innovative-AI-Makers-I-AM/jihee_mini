@@ -8,7 +8,11 @@ face_app.prepare(ctx_id=0, det_size=(640, 640))
 def calculate_face_similarity(feat1, feat2) -> float:
     """얼굴 임베딩 간 유사도를 계산하는 함수"""
     similarity = np.dot(feat1, feat2.T)
-    return float(similarity)
+    print("float : ")
+    print(similarity)  
+    print("max : ") 
+    print(float(np.max(similarity)))
+    return float(np.max(similarity))
 
 def check_image_angles(faces):
     '''얼굴 이미지에서 얼굴 각도를 체크하는 함수'''

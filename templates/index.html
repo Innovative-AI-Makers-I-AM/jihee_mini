@@ -1,59 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- 문서의 문자 인코딩을 UTF-8로 설정 -->
     <meta charset="UTF-8">
-    <!-- 뷰포트 설정: 모바일 장치에서 페이지를 적절히 표시 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 페이지 제목 -->
     <title>Main Page</title>
-    <!-- 외부 CSS 파일을 로드 -->
     <link rel="stylesheet" href="/static/style.css">
-    <!-- 외부 JavaScript 파일을 로드, 페이지 로드 후에 실행 -->
     <script src="/static/script.js" defer></script>
 </head>
 <body>
-    <!-- 페이지 헤더 -->
     <header>
         <h1>I AM (Innovative AI Makers) Project</h1>
     </header>
-    <!-- 메인 컨텐츠 영역 -->
     <main>
-        <!-- 비디오 섹션 -->
         <section class="video-section">
-            <!-- 웹캠 비디오 스트림을 표시 (좌우 반전 적용) -->
             <video id="video" class="flip-video" width="640" height="480" autoplay></video>
-            <!-- 이미지 캡처 버튼 -->
             <button id="capture" class="button">캡쳐하기</button>
-            <!-- 결과를 표시할 영역 -->
             <div id="result"></div>
         </section>
-        <!-- 출퇴근 기록 섹션 -->
         <section class="entry-list-section">
-            <!-- 출퇴근 기록 제목 -->
             <h2 id="recordTitle">프로젝트 구성원 출퇴근 기록</h2>
-            <!-- 출퇴근 기록을 표시할 리스트 -->
             <ul id="entries" class="entry-list"></ul>
         </section>
     </main>
-
-    <!-- 출근/퇴근 확인 모달 -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
-            <!-- 확인 메시지 -->
             <p id="confirmationMessage"></p>
-            <!-- 확인 및 취소 버튼 -->
-            <button id="confirmButton" class="button">네</button>
-            <button id="cancelButton" class="button cancel">아니요</button>
+            <button id="entryButton" class="button">출근</button>
+            <button id="outgoingButton" class="button">외출</button>
+            <button id="returningButton" class="button">복귀</button>
+            <button id="exitButton" class="button">퇴근</button>
+            <button id="cancelButton" class="button cancel">취소</button>
         </div>
     </div>
-
-    <!-- 이미 퇴근한 사용자에 대한 모달 -->
     <div id="alreadyExitedModal" class="modal">
         <div class="modal-content">
-            <!-- 이미 퇴근했다는 메시지 -->
             <p id="alreadyExitedMessage"></p>
-            <!-- 확인 버튼 -->
             <button id="alreadyExitedConfirmButton" class="button">확인</button>
         </div>
     </div>

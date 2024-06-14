@@ -1,0 +1,21 @@
+# import base64
+# import cv2
+# import numpy as np
+# from fastapi import HTTPException
+# import os
+# from utils.face import face_app
+
+# def save_user_images(name, images):
+#     user_names = [file_name.split('.')[0] for file_name in os.listdir('data/users')]
+#     user_name = name
+#     suffix = ""
+#     while user_name + suffix in user_names:
+#         if not suffix:
+#             suffix = "A"
+#         else:
+#             suffix = chr(ord(suffix) + 1)
+           
+# @router.post("/register_user/")
+# async def register_user(name: str = Form(...), front_image: str = Form(...), left_image: str = Form(...), right_image: str = Form(...)):
+#     user_name = save_user_images(name, [front_image, left_image, right_image])
+#     return {"message": f"{user_name}님, 성공적으로 등록되었습니다."}

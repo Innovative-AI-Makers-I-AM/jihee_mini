@@ -159,3 +159,11 @@ main {
     border: 1px solid #ddd;
     border-radius: 5px;
 }
+
+*:disabled {
+    background-color: gray;
+}
+
+*:disabled:hover {
+    background-color: rgb(78, 78, 78);
+}

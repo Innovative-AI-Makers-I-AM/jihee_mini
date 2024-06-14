@@ -195,15 +195,51 @@ function handleAttendance(action) {
     const now = new Date();
     const timeString = now.toLocaleTimeString();
     const entry = findOrCreateEntry(currentUserName, action);
-    if (action === '퇴근' || action === '복귀') {
-        const startAction = action === '퇴근' ? '출근' : '외출';
+
+    if (action === '퇴근') {
+        const startAction = '출근';
         const startTime = findLastActionTime(currentUserName, startAction);
         if (startTime) {
             const totalTime = calculateTimeDifference(startTime, now);
             entry.querySelector('.total-time').textContent = `총 시간: ${totalTime}`;
         }
+        // 퇴근 버튼을 비활성화하여 하루에 한번만 퇴근할 수 있도록 설정
+        endWorkButton.disabled = true;
+        goOutButton.disabled = true;
+        comeBackButton.disabled = true;
+        startWorkButton.disabled = true;
+    } else if (action === '복귀') {
+        const goOutTime = findLastActionTime(currentUserName, '외출');
+        if (goOutTime) {
+            const totalTime = calculateTimeDifference(goOutTime, now);
+            entry.querySelector('.total-time').textContent = `총 외출시간: ${totalTime}`;
+        }
+        goOutButton.disabled = false;
     }
     entry.querySelector(`.${action}`).textContent = `${timeString} (${action})`;
+
+    // 출근 시 외출, 퇴근 버튼을 활성화
+    if (action === '출근') {
+        setButtonStates({ startWork: true, endWork: false, goOut: false, comeBack: true });
+    }
+    // 외출 시 복귀 버튼을 활성화
+    if (action === '외출') {
+        setButtonStates({ startWork: true, endWork: false, goOut: true, comeBack: false });
+    }
+    // 복귀 시 외출 버튼을 활성화
+    if (action === '복귀') {
+        setButtonStates({ startWork: true, endWork: false, goOut: false, comeBack: true });
+    }
+
+    // if (action === '퇴근' || action === '복귀') {
+    //     const startAction = action === '퇴근' ? '출근' : '외출';
+    //     const startTime = findLastActionTime(currentUserName, startAction);
+    //     if (startTime) {
+    //         const totalTime = calculateTimeDifference(startTime, now);
+    //         entry.querySelector('.total-time').textContent = `총 시간: ${totalTime}`;
+    //     }
+    // }
+    // entry.querySelector(`.${action}`).textContent = `${timeString} (${action})`;
     confirmationModal.style.display = 'none';
     isFaceDetected = false;
 }

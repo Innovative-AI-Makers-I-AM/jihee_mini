@@ -2,6 +2,8 @@
 ```
 conda create -n mini python=3.10 
 
+conda activate mini
+
 pip install -r requirements.txt 
 
 pip install "uvicorn[standard]" 

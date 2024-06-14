@@ -19,7 +19,7 @@ def check_image_angles(faces):
         # 왼쪽 눈, 오른쪽 눈, 코의 위치 추출
         left_eye = landmarks[38]
         right_eye = landmarks[88]
-        nose = landmarks[54]
+        nose = landmarks[86]
 
         # 눈 사이의 거리 계산
         eye_dx = right_eye[0] - left_eye[0]

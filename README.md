@@ -14,20 +14,37 @@ uvicorn main:app --reload
 
 # 디렉토리 구조
 my_fastapi_app/
+
 ├── main.py
+
 ├── routers/
+
 │ ├── init.py
+
 │ ├── register.py
+
 │ ├── similarity.py
+
 │ ├── angle.py
+
 │ ├── identify.py
+
 ├── utils/
+
 │ ├── init.py
+
 │ ├── face.py
+
 │ ├── file.py
+
 ├── models/
+
 │ ├── init.py
+
 ├── templates/
+
 │ ├── index.html
+
 │ ├── register.html
+
 └── static/

@@ -48,9 +48,9 @@ function onScriptLoad() {
     async function onResults(results) {
         if (!isFaceDetected && results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
             isFaceDetected = true; // 얼굴이 감지되면 플래그를 true로 설정
-            const landmarks = results.multiFaceLandmarks[0];
+            // const landmarks = results.multiFaceLandmarks[0];
             // 필요에 따라 landmarks를 처리하거나 저장할 수 있습니다.
-            console.log('Landmarks detected:', landmarks);
+            // console.log('Landmarks detected:', landmarks);
 
             // 얼굴이 감지되면 사진을 찍는 함수 호출
             captureButton.click();
@@ -104,15 +104,24 @@ captureButton.addEventListener('click', () => {
         if (response.ok) {
             const result = await response.json();
             currentUserName = result.name;
-            currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
+
+            const entriesTable = document.getElementById('entriesTable');
+            const alreadyExited = entriesTable.querySelector(`tr[data-name="${currentUserName}"][data-exit-time]`);
+            currentUserInEntryList = entriesTable.querySelector(`tr[data-name="${currentUserName}"]`) !== null;
+            // currentUserInEntryList = document.querySelector(`#entries li[data-name="${currentUserName}"]`) !== null;
             // 이미 퇴근한 사용자인지 확인
-            const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
+            // const alreadyExited = document.querySelector(`#entries li[data-name="${currentUserName}"][data-exit-time]`);
+            
             if (alreadyExited) {
                 alreadyExitedMessage.textContent = `${currentUserName}님은 이미 퇴근하셨습니다.`;
                 alreadyExitedModal.style.display = 'block';
             } else {
                 confirmationMessage.textContent = `${currentUserName}님 ${currentUserInEntryList ? '퇴근' : '출근'}확인을 하시겠습니까?`;
                 confirmationModal.style.display = 'block';
+
+                setTimeout(() => {
+                    isFaceDetected = false;
+                }, 2000);
             }
         } else if (response.status === 404) {
             alert('등록된 사용자가 없어 사용자 등록 페이지로 이동합니다.');
@@ -120,6 +129,9 @@ captureButton.addEventListener('click', () => {
         } else {
             const result = await response.json();
             resultDiv.innerHTML = `<p>${result.detail}</p>`;
+            setTimeout(() => {
+                isFaceDetected = false;
+            }, 2000);
         }
     }, 'image/jpeg');
 });
@@ -148,23 +160,46 @@ alreadyExitedConfirmButton.addEventListener('click', () => {
 });
 // 출근 기록 추가 함수
 function addEntry(name, time) {
-    const timeString = time.toLocaleTimeString();
-    const entry = document.createElement('li');
-    entry.textContent = `${name} - ${timeString} (출근)`;
-    entry.setAttribute('data-name', name);
-    entry.setAttribute('data-entry-time', time.toISOString());
-    entriesList.appendChild(entry);
+    // const timeString = time.toLocaleTimeString();
+    // const entry = document.createElement('li');
+    // entry.textContent = `${name} - ${timeString} (출근)`;
+    // entry.setAttribute('data-name', name);
+    // entry.setAttribute('data-entry-time', time.toISOString());
+    // entriesList.appendChild(entry);
+    const entriesTable = document.getElementById('entriesTable');
+
+    const timeString = time.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit', hour12: false});
+    const rowHTML = `
+        <tr data-name="${name}" data-entry-time="${time.toISOString()}">
+            <td>${name}</td>
+            <td>${timeString}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    `;
+    entriesTable.insertAdjacentHTML('beforeend', rowHTML);
 }
 // 퇴근 기록 추가 함수
 function addExit(name, exitTime) {
-    const entry = document.querySelector(`#entries li[data-name="${name}"]`);
-    if (entry) {
-        const entryTime = new Date(entry.getAttribute('data-entry-time'));
-        const timeString = exitTime.toLocaleTimeString();
-        const totalTime = calculateTotalTime(entryTime, exitTime);
-        entry.textContent += ` / ${timeString} (퇴근) - 총 근무시간: ${totalTime}`;
-        entry.setAttribute('data-exit-time', exitTime.toISOString());
-    }
+    // const entry = document.querySelector(`#entries li[data-name="${name}"]`);
+    // if (entry) {
+    //     const entryTime = new Date(entry.getAttribute('data-entry-time'));
+    //     const timeString = exitTime.toLocaleTimeString();
+    //     const totalTime = calculateTotalTime(entryTime, exitTime);
+    //     entry.textContent += ` / ${timeString} (퇴근) - 총 근무시간: ${totalTime}`;
+    //     entry.setAttribute('data-exit-time', exitTime.toISOString());
+    // }
+    const entriesTable = document.getElementById('entriesTable');
+    const tragetRow = entriesTable.querySelector(`tr[data-name="${name}"]`);
+    tragetRow.setAttribute('data-exit-time', exitTime.toISOString());
+    const 퇴근 = tragetRow.querySelector(":nth-child(3)");
+
+    const timeString = exitTime.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit', hour12: false});
+    퇴근.innerHTML = `${timeString}`
+
 }
 // 총 근무시간 계산 함수
 function calculateTotalTime(entryTime, exitTime) {

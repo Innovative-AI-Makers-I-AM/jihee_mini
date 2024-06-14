@@ -31,9 +31,41 @@
         <!-- 출퇴근 기록 섹션 -->
         <section class="entry-list-section">
             <!-- 출퇴근 기록 제목 -->
-            <h2 id="recordTitle">프로젝트 구성원 출퇴근 기록</h2>
+            <h2 id="recordTitle" style="text-align: center;">프로젝트 구성원 출퇴근 기록</h2>
             <!-- 출퇴근 기록을 표시할 리스트 -->
             <ul id="entries" class="entry-list"></ul>
+            <style>
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    border: 1px solid black;
+                    /* padding: 8px; */
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                    text-align: center;
+                }
+                th{
+                    background-color: rgb(231, 231, 231);
+                }
+            </style>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">이름</th>
+                        <th style="color: rgb(37, 114, 90);">출근</th>
+                        <th style="color: rgb(207, 90, 90);">퇴근</th>
+                        <th style="color: cadetblue;">외출</th>
+                        <th style="color: cadetblue;">복귀</th>
+                        <th style="width: 100px;">총 근무시간</th>
+                        <th style="width: 100px;">총 외출시간</th>
+                    </tr>
+                </thead>
+                <tbody id="entriesTable">
+                    <!-- 출근 기록이 여기에 추가됩니다 -->
+                </tbody>
+            </table>
         </section>
     </main>
 

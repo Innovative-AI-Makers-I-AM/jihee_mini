@@ -35,7 +35,6 @@ async def identify_user(file: UploadFile = File(...)):
     # 사용자 데이터 조회
     users = session.query(User).all()
     for user in users:
-        # print(f"ID: {user.id}, Name: {user.name}, Embedding: {json.loads(user.embedding)}")
         savedEmbedding = json.loads(user.embedding)
         similarity = calculate_face_similarity(np.array(savedEmbedding), target_embedding)
         # 더 높은 유사도를 찾으면 최대 유사도와 해당 사용자 데이터 업데이트

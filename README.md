@@ -19,32 +19,32 @@ my_fastapi_app/
 
 ├── routers/
 
-│ ├── init.py
+│   ├── init.py
 
-│ ├── register.py
+│   ├── register.py
 
-│ ├── similarity.py
+│   ├── similarity.py
 
-│ ├── angle.py
+│   ├── angle.py
 
-│ ├── identify.py
+│   ├── identify.py
 
 ├── utils/
 
-│ ├── init.py
+│   ├── init.py
 
-│ ├── face.py
+│   ├── face.py
 
-│ ├── file.py
+│   ├── file.py
 
 ├── models/
 
-│ ├── init.py
+│   ├── init.py
 
 ├── templates/
 
-│ ├── index.html
+│   ├── index.html
 
-│ ├── register.html
+│   ├── register.html
 
 └── static/

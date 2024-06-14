@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+# from fastapi import FastAPI, Request
+from fastapi import *
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -16,6 +17,10 @@ app.include_router(register.router)
 app.include_router(similarity.router)
 app.include_router(angle.router)
 app.include_router(identify.router)
+
+@app.on_event("startup")
+def on_startup():
+    Test.metadata.create_all(bind=engine)
 
 @app.on_event("startup")
 async def startup_event():

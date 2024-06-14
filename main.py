@@ -7,8 +7,8 @@ import os
 from routers import register, similarity, angle, identify
 # 가람추가
 from sqlalchemy.orm import Session
-from .database.database import engine, get_db, Base
-from .database.models import User, managing
+from database.database import engine, get_db, Base
+from database.models import User, Managing
 # 가람추가
 
 app = FastAPI()

@@ -11,9 +11,9 @@ class User(Base):
     name = Column(String(255), nullable=False)
     embedding = Column(BLOB)
 
-    managing = relationship("managing", back_populates="user")
+    managing = relationship("Managing", back_populates="user")
 
-class managing(Base):
+class Managing(Base):
     __tablename__ = "managing"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)

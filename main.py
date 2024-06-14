@@ -5,6 +5,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 from routers import register, similarity, angle, identify
+# 가람추가
+from sqlalchemy.orm import Session
+from .database.database import engine, get_db, Base
+from .database.models import User, managing
+# 가람추가
 
 app = FastAPI()
 
@@ -19,11 +24,8 @@ app.include_router(angle.router)
 app.include_router(identify.router)
 
 @app.on_event("startup")
-def on_startup():
-    Test.metadata.create_all(bind=engine)
-
-@app.on_event("startup")
 async def startup_event():
+    Base.metadata.create_all(bind=engine)
     os.makedirs('data/users', exist_ok=True)
 
 @app.get("/", response_class=HTMLResponse)

@@ -135,6 +135,15 @@ export function showModalBasedOnState() {
     const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
     const todayEntries = entries.filter(entry => entry.name === getCurrentUserName() && entry.date === getCurrentDate());
 
+    let hasOutgoing = false;
+
+    // 외출이 이미 한 번 이상 있었는지 체크
+    todayEntries.forEach(entry => {
+        if (entry.type === '외출') {
+            hasOutgoing = true;
+        }
+    });
+
     entryButton.style.display = 'none';
     outgoingButton.style.display = 'none';
     returningButton.style.display = 'none';
@@ -145,7 +154,7 @@ export function showModalBasedOnState() {
         confirmationMessage.textContent = `${getCurrentUserName()}님 출근하시겠습니까?`;
     } else {
         const lastEntry = todayEntries[todayEntries.length - 1];
-        if (lastEntry.type === '출근' || lastEntry.type === '복귀') {
+        if ((lastEntry.type === '출근' || lastEntry.type === '복귀') && !hasOutgoing) {
             outgoingButton.style.display = 'inline-block';
             exitButton.style.display = 'inline-block';
             confirmationMessage.textContent = `${getCurrentUserName()}님 외출 또는 퇴근하시겠습니까?`;
@@ -153,13 +162,17 @@ export function showModalBasedOnState() {
             returningButton.style.display = 'inline-block';
             exitButton.style.display = 'inline-block';
             confirmationMessage.textContent = `${getCurrentUserName()}님 복귀 또는 퇴근하시겠습니까?`;
+        } else if (lastEntry.type === '출근' || lastEntry.type === '복귀') {
+            exitButton.style.display = 'inline-block';
+            confirmationMessage.textContent = `${getCurrentUserName()}님 퇴근하시겠습니까?`;
         }
     }
 
     confirmationModal.style.display = 'block';
 }
 
-// 
+
+// 현재 날짜 가져오기
 export function getCurrentDate() {
     const today = new Date();
     const year = today.getFullYear();

@@ -180,6 +180,29 @@ export function handleAction(type) {
                 .then(response => response.json())
                 .then(data => {console.log(data); console.log("퇴근됨")})
                 .catch(error => console.error('Error:', error));
+                
+                // GET 요청으로 유저 ID 가져오기
+                fetch(`get_today_attendance`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                })
+                .then(response => response.json())
+                .then(entries => {
+                    console.log(entries);
+                    entriesList.innerHTML = ''; // 기존 리스트 초기화
+                    
+                    for (let entry of entries) {
+                        let totalWorkTime = calculateTotalWorkTime(entry);
+                        let totalLeaveTime = calculateTotalLeaveTime(entry);
+                        
+                        let li = document.createElement('li');
+                        li.textContent = `${entry.name} - (입실) ${entry.entry_time || '없음'} (퇴실) ${entry.exit_time || '없음'} (외출) ${entry.leave_time || '없음'} (복귀) ${entry.return_time || '없음'} // (근무시간) ${totalWorkTime} // (외출시간) ${totalLeaveTime}`;
+                        entriesList.appendChild(li);
+                    }
+                })
+                .catch(error => console.error('Error fetching attendance data:', error));
                 break;
         }
 

@@ -60,10 +60,10 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
 
         embeddings.append(faces[0].normed_embedding.tolist())
         
-        # 디코딩된 이미지를 파일로 저장 (각도가 맞았을 때만 저장)
-        image_path = f'data/users/{user_name}/image{i}.png'
-        with open(image_path, "wb") as f:
-            f.write(image_data)
+        # # 디코딩된 이미지를 파일로 저장 (각도가 맞았을 때만 저장)
+        # image_path = f'data/users/{user_name}/image{i}.png'
+        # with open(image_path, "wb") as f:
+        #     f.write(image_data)
 
     # user_data = {"name": user_name, "embeddings": embeddings}
     # user_file = f"data/users/{user_name}.json"

@@ -23,3 +23,8 @@
 
 - **경로**: `/identify_user/`
 - **기능**: 업로드된 이미지를 기반으로 사용자 식별을 수행합니다.
+
+### routers/repository.py
+
+- **경로**: `/attendance/`, `/leave/`, `/return/`, `/exit/`
+- **기능**: 클라이언트에서 요청받은 DB의 CRUD 요청을 수행합니다.

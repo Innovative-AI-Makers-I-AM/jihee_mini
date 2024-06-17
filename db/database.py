@@ -107,3 +107,11 @@ def update_leave_time(user_id):
     if attendance_record:
         attendance_record.leave_time = current_time
         session.commit()
+
+
+# ID 얻어오기
+def get_user_id(name):
+    user = session.query(User).filter_by(name=name).first()
+    if user:
+        return user.id
+    return None

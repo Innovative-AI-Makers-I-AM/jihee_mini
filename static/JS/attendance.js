@@ -66,14 +66,97 @@ export function loadEntries() {
 
 // 출,외,복,퇴 버튼 처리
 export function handleAction(type) {
-    const now = new Date();
-    addEntry(getCurrentUserName(), now, type);
-    confirmationModal.style.display = 'none';
-    setIsFaceDetected(false);
-    if (type === '퇴근') {
-        setIsFaceDetected(true);
+
+    let userId = null;  // 'let' 키워드를 사용하여 변수를 재할당할 수 있게 합니다.
+
+    const userName = getCurrentUserName();
+
+    const params = new URLSearchParams({
+        'name': userName
+    });
+
+    // GET 요청으로 유저 ID 가져오기
+    fetch(`get_user_id?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        userId = data.user_id;
+        console.log('User ID:', userId);
+
+        // userId가 설정된 후에 switch 문 실행
+        switch (type) {
+            case '출근':
+                fetch('attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'user_id': userId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {console.log(data); console.log("출근됨")})
+                .catch(error => console.error('Error:', error));
+                break;
+            case '외출':
+                fetch('leave', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'user_id': userId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {console.log(data); console.log("외출됨")})
+                .catch(error => console.error('Error:', error));
+                break;
+            case '복귀':
+                fetch('return', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'user_id': userId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {console.log(data); console.log("복귀됨")})
+                .catch(error => console.error('Error:', error));
+                break;
+            case '퇴근':
+                fetch('exit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'user_id': userId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {console.log(data); console.log("퇴근됨")})
+                .catch(error => console.error('Error:', error));
+                break;
+        }
+
+        // const now = new Date();
+        // addEntry(getCurrentUserName(), now, type);
+        confirmationModal.style.display = 'none';
+        setIsFaceDetected(false);
+        if (type === '퇴근') {
+            setIsFaceDetected(true);
+        }
+    })
+    .catch(error => console.error('Error:', error));
     }
-}
 
 // LocalStorage에 넣기 위해 데이터 처리 및 저장
 function addEntry(name, time, type) {

@@ -159,3 +159,9 @@ main {
     border: 1px solid #ddd;
     border-radius: 5px;
 }
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}

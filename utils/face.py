@@ -1,13 +1,22 @@
 import numpy as np
 from insightface.app import FaceAnalysis
+# 가람추가
+from numpy.linalg import norm
 
 # 얼굴 분석을 위한 FaceAnalysis 객체 생성 및 준비
 face_app = FaceAnalysis(providers=['CPUExecutionProvider'])
 face_app.prepare(ctx_id=0, det_size=(640, 640))
 
+# 가람추가
+# def calculate_face_similarity(feat1, feat2) -> float:
+#     feat1 = np.array(feat1).flatten()
+#     feat2 = np.array(feat2).flatten()
+#     similarity = np.dot(feat1, feat2) / (np.linalg.norm(feat1) * np.linalg.norm(feat2))
+#     return float(similarity)
+
 def calculate_face_similarity(feat1, feat2) -> float:
     """얼굴 임베딩 간 유사도를 계산하는 함수"""
-    similarity = np.dot(feat1, feat2.T)
+    similarity = np.dot(feat1, feat2.T) / (norm(feat1) * norm(feat2))
     return float(similarity)
 
 def check_image_angles(faces):

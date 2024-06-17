@@ -76,7 +76,6 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
     # 가람추가s
     # DB에 사용자 정보 저장
     user_embedding = np.array(embeddings).astype(np.float32).flatten().tobytes()
-    # encoded_embedding = base64.b85encode(user_embedding).decode('utf-8')
     new_user = User(name=user_name, embedding=user_embedding)
     db.add(new_user)
     db.commit()
@@ -84,7 +83,6 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
 
     # 저장된 임베딩 값 로그 출력
     print(f"Stored embedding for user {user_name}: {user_embedding}")
-    # print(f"Stored embedding for user {user_name}: {encoded_embedding}")
-
 
     return {"message": "성공적으로 등록되었습니다."}
+0

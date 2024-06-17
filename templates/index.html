@@ -25,12 +25,20 @@
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <p id="confirmationMessage"></p>
+            <button id="entryButton" class="button" onclick="recordTime('check_in')">출근</button>
+            <button id="outgoingButton" class="button" onclick="recordTime('out_time')">외출</button>
+            <button id="returningButton" class="button" onclick="recordTime('return_time')">복귀</button>
+            <button id="exitButton" class="button" onclick="recordTime('check_out')">퇴근</button>
+            <button id="cancelButton" class="button cancel">취소</button>
+        </div>
+        <!-- <div class="modal-content">
+            <p id="confirmationMessage"></p>
             <button id="entryButton" class="button">출근</button>
             <button id="outgoingButton" class="button">외출</button>
             <button id="returningButton" class="button">복귀</button>
             <button id="exitButton" class="button">퇴근</button>
             <button id="cancelButton" class="button cancel">취소</button>
-        </div>
+        </div> -->
     </div>
     <div id="alreadyExitedModal" class="modal">
         <div class="modal-content">

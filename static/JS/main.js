@@ -19,3 +19,30 @@ window.addEventListener('beforeunload', () => {
 
     video.srcObject = null;
 });
+
+// 가람추가
+async function recordTime(action) {
+    const userId = userId
+    const response = await fetch('/api/record_time', {
+        method: 'POST',
+        headers: {
+            'Content-Type' : 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            action: action
+        })
+    });
+    
+    const result = await response.json();
+    if(result.success) {
+        alert('시간이 기록되었습니다.')
+    } else {
+        alert('시간 기록에 실패했습니다.')
+    }
+}
+
+document.getElementById('entryButton').addEventListener('click',() => recordTime('check_in'))
+document.getElementById('outgoingButton').addEventListener('click',() => recordTime('out_time'))
+document.getElementById('returningButton').addEventListener('click',() => recordTime('return_time'))
+document.getElementById('exitButton').addEventListener('click',() => recordTime('check_out'))

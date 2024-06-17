@@ -29,12 +29,16 @@ async def identify_user(file: UploadFile = File(...), db: Session = Depends(get_
 
     # 감지된 얼굴의 임베딩 추출
     target_embedding = faces[0].normed_embedding
+    # users_dir = "data/users"
     max_similarity = 0.6    # 유사도의 초기 최대값 설정
     identified_user = None
 
     # 저장된 사용자 데이터를 순회하며 유사도 비교
 
     users = db.query(User).all()
+    if not users:
+        raise HTTPException(status_code=404, detail="등록된 사용자가 없습니다.")
+    
     for user in users:
         stored_embedding = np.frombuffer(user.embedding, dtype=np.float32).reshape(-1, 512)
 
@@ -45,7 +49,7 @@ async def identify_user(file: UploadFile = File(...), db: Session = Depends(get_
             max_similarity = similarity
             identified_user = user
     
-        # 로그 출력
+    # 로그 출력
     print(f"Checking user: {user.name}")
     print(f"Stored Embedding: {embedding}")
     print(f"Target Embedding: {target_embedding}")

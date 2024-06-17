@@ -43,9 +43,9 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # 사용자 데이터 추가 함수
-def add_user(name, embedding):
+def add_user(name, embeddings):
     # embedding을 JSON 문자열로 변환하여 저장
-    embedding_str = json.dumps(embedding)
+    embedding_str = json.dumps(embeddings)
     
     new_user = User(name=name, embedding=embedding_str)
     session.add(new_user)

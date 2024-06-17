@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Request, HTTPException #, FastAPI, File, UploadFile
+from fastapi import APIRouter, Form, Request, HTTPException, Depends #, FastAPI, File, UploadFile
 from fastapi.responses import HTMLResponse
 import base64
 import os
@@ -8,6 +8,10 @@ import numpy as np
 from utils.face import face_app
 # from utils.file import save_user_images
 from fastapi.templating import Jinja2Templates
+# 가람추가
+from sqlalchemy.orm import Session
+from database.database import get_db
+from database.models import User
 
 router = APIRouter()
 
@@ -19,7 +23,7 @@ async def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 @router.post("/register_user/")
-async def register_user(name: str = Form(...), front_image: str = Form(...), left_image: str = Form(...), right_image: str = Form(...)):
+async def register_user(name: str = Form(...), front_image: str = Form(...), left_image: str = Form(...), right_image: str = Form(...), db: Session = Depends(get_db)):
     """회원가입 처리 엔드포인트"""
 
     # 중복되는 사용자 이름이 있는지 확인
@@ -68,5 +72,13 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
     user_file = f"data/users/{user_name}.json"
     with open(user_file, 'w') as f:
         json.dump(user_data, f)
+
+    # 가람추가
+    # DB에 사용자 정보 저장
+    user_embedding = np.array(embeddings).flatten().tobytes()
+    new_user = User(name=user_name, embedding=user_embedding)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
     return {"message": "성공적으로 등록되었습니다."}

@@ -45,9 +45,9 @@ def check_image_angles(faces):
 
         # 각도를 기준으로 얼굴 방향 판단
         print(f"Eye Angle: {eye_angle}, Nose-Left Eye Angle: {nose_left_eye_angle}, Nose-Right Eye Angle: {nose_right_eye_angle}, Average Angle: {avg_angle}")  # 각도 값을 로그로 출력
-        if 60 < avg_angle < 70:
+        if 58 < avg_angle < 70:
             return 'front'  # 정면
-        elif avg_angle <= 60:
+        elif avg_angle <= 58:
             return 'left'   # 왼쪽
         elif avg_angle >= 70:
             return 'right'  # 오른쪽

@@ -22,7 +22,7 @@ window.addEventListener('beforeunload', () => {
 
 // 가람추가
 async function recordTime(action) {
-    const userId = userId
+    const userId = getCurrentUserId(); // 현재 사용자 ID 가져오는 함수
     const response = await fetch('/api/record_time', {
         method: 'POST',
         headers: {

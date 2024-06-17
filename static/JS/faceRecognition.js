@@ -1,5 +1,5 @@
 import { showModalBasedOnState } from './attendance.js';
-import { setCurrentUserName } from './state.js';
+import { setCurrentUserId, setCurrentUserName } from './state.js';
 
 export async function handleFaceRecognition() {
     const video = document.getElementById('video');
@@ -17,6 +17,8 @@ export async function handleFaceRecognition() {
         if (response.ok) {
             const result = await response.json();
             setCurrentUserName(result.name);
+            // 가람추가
+            setCurrentUserId(result.user_id);
             showModalBasedOnState();
         } else if (response.status === 404) {
             alert('등록된 사용자가 없어 사용자 등록 페이지로 이동합니다.');

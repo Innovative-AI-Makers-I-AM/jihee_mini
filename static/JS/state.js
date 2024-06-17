@@ -17,3 +17,14 @@ export function setIsFaceDetected(value) {
 export function getIsFaceDetected() {
     return isFaceDetected;
 }
+
+// 가람추가
+let currentUserId = null;
+
+export function setCurrentUserId(id) {
+    currentUserId = id;
+}
+
+export function getCurrentUserId() {
+    return currentUserId;
+}

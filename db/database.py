@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Sequence, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Sequence, ForeignKey, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -30,9 +30,8 @@ class Attendance(Base):
 
     user = relationship("User", back_populates="attendances")
 
-
 # SQLite 데이터베이스 생성
-engine = create_engine('sqlite:///C:/Users/user/miniprj/jihee_mini/db/db.sqlite')   # 파일에 저장
+engine = create_engine('sqlite:///C:/Users/kngin/jihee_mini/db/db.sqlite')   # 파일에 저장
 # engine = create_engine("sqlite+pysqlite:///:memory:", echo=True)  메모리에 저장
 
 # 테이블 생성
@@ -115,3 +114,54 @@ def get_user_id(name):
     if user:
         return user.id
     return None
+
+
+# 오늘 날짜에 해당하는 입출입기록 + 사용자이름
+def get_today_attendance():
+    current_date = datetime.now().strftime('%y-%m-%d')
+    attendances = session.query(Attendance).filter_by(date=current_date).all()
+    
+    results = []
+    for attendance in attendances:
+        user = session.query(User).filter_by(id=attendance.user_id).first()
+        if user:
+            result = {
+                'name': user.name,
+                'entry_time': attendance.entry_time,
+                'exit_time': attendance.exit_time,
+                'return_time': attendance.return_time,
+                'leave_time': attendance.leave_time
+            }
+            results.append(result)
+    
+    return results
+
+
+# 사용자의 이름과 오늘 날짜를 매개변수로 받아서 오늘 기록된 해당 사용자의 출결 1row을 반환하는 함수 정의
+def get_one_today_attendance(name, date):
+    # 사용자 정보 조회
+    user = session.query(User).filter_by(name=name).first()
+
+    if not user:
+        return None
+
+    # 출결 기록 조회
+    formatted_date = datetime.strptime(date, '%Y.%m.%d').strftime('%y-%m-%d')
+    attendance_record = session.query(Attendance).filter(
+        Attendance.user_id == user.id,
+        Attendance.date.like(formatted_date)
+    ).first()
+    print("user : ", name)
+    print("date : ", date)
+    print("attendance_record : ", attendance_record)
+    if not attendance_record:
+        return None
+
+    # 조회된 출결 기록을 사전 형태로 변환하여 반환
+    return {
+        'name': user.name,
+        'entry_time': attendance_record.entry_time,
+        'exit_time': attendance_record.exit_time,
+        'return_time': attendance_record.return_time,
+        'leave_time': attendance_record.leave_time
+    }

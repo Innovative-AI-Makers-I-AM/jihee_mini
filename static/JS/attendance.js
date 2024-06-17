@@ -27,47 +27,83 @@ cancelButton.addEventListener('click', () => {
     setIsFaceDetected(false);
 });
 
+
 // 출퇴근 리스트 불러오기
 export function loadEntries() {
-    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
-    const usersMap = new Map();
 
-    entries.forEach(entry => {
-        const key = entry.name;
-        const value = {
-            timeString: entry.timeString,
-            type: entry.type,
-            entryTime: entry.entryTime
-        };
-        if (usersMap.has(key)) {
-            usersMap.get(key).push(value);
-        } else {
-            usersMap.set(key, [value]);
+    // GET 요청으로 유저 ID 가져오기
+    fetch(`get_today_attendance`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
         }
-    });
+    })
+    .then(response => response.json())
+    .then(entries => {
+        console.log(entries);
+        entriesList.innerHTML = ''; // 기존 리스트 초기화
+        
+        for (let entry of entries) {
+            let totalWorkTime = calculateTotalWorkTime(entry);
+            let totalLeaveTime = calculateTotalLeaveTime(entry);
+            
+            let li = document.createElement('li');
+            li.textContent = `${entry.name} - (입실) ${entry.entry_time || '없음'} (퇴실) ${entry.exit_time || '없음'} (외출) ${entry.leave_time || '없음'} (복귀) ${entry.return_time || '없음'} // (근무시간) ${totalWorkTime} // (외출시간) ${totalLeaveTime}`;
+            entriesList.appendChild(li);
+        }
+    })
+    .catch(error => console.error('Error fetching attendance data:', error));
+}
 
-    entriesList.innerHTML = '';
+function calculateTotalWorkTime(entry) {
+    if (!entry.entry_time || !entry.exit_time) {
+        return '00:00:00';
+    }
 
-    usersMap.forEach((entries, name) => {
-        const li = document.createElement('li');
-        li.textContent = `${name}: `;
-        entries.forEach((entry, index) => {
-            li.textContent += `${entry.timeString} (${entry.type})`;
-            if (index !== entries.length - 1) {
-                li.textContent += ', ';
-            }
-        });
+    let entryTime = new Date(`1970-01-01T${entry.entry_time}Z`);
+    let exitTime = new Date(`1970-01-01T${entry.exit_time}Z`);
+    let totalWorkTime = (exitTime - entryTime); // 밀리초 단위로 계산
 
-        const totalWorkTime = calculateTotalWorkTime(entries);
-        li.textContent += ` - 총 근무시간: ${totalWorkTime}`;
-        entriesList.appendChild(li);
-    });
+    if (entry.leave_time && entry.return_time) {
+        let leaveTime = new Date(`1970-01-01T${entry.leave_time}Z`);
+        let returnTime = new Date(`1970-01-01T${entry.return_time}Z`);
+        let totalLeaveTime = (returnTime - leaveTime); // 밀리초 단위로 계산
+        totalWorkTime -= totalLeaveTime;
+    }
+
+    return formatTime(totalWorkTime);
+}
+
+function calculateTotalLeaveTime(entry) {
+    if (!entry.leave_time || !entry.return_time) {
+        return '00:00:00';
+    }
+
+    let leaveTime = new Date(`1970-01-01T${entry.leave_time}Z`);
+    let returnTime = new Date(`1970-01-01T${entry.return_time}Z`);
+    let totalLeaveTime = (returnTime - leaveTime); // 밀리초 단위로 계산
+
+    return formatTime(totalLeaveTime);
+}
+
+function formatTime(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    // 두 자리 숫자로 포맷팅
+    const formattedHours = String(hours).padStart(2, '0');
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(seconds).padStart(2, '0');
+
+    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 }
 
 // 출,외,복,퇴 버튼 처리
 export function handleAction(type) {
 
-    let userId = null;  // 'let' 키워드를 사용하여 변수를 재할당할 수 있게 합니다.
+    let userId = null;  
 
     const userName = getCurrentUserName();
 
@@ -147,8 +183,6 @@ export function handleAction(type) {
                 break;
         }
 
-        // const now = new Date();
-        // addEntry(getCurrentUserName(), now, type);
         confirmationModal.style.display = 'none';
         setIsFaceDetected(false);
         if (type === '퇴근') {
@@ -158,100 +192,61 @@ export function handleAction(type) {
     .catch(error => console.error('Error:', error));
     }
 
-// LocalStorage에 넣기 위해 데이터 처리 및 저장
-function addEntry(name, time, type) {
-    const timeString = time.toLocaleTimeString();
-    const entry = {
-        name: name,
-        timeString: timeString,
-        type: type,
-        entryTime: time.toISOString(),
-        date: getCurrentDate()
-    };
-    saveEntry(entry);
-    loadEntries();
-}
-
-// LocalStorage에 데이터 저장
-function saveEntry(entry) {
-    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
-    entries.push(entry);
-    localStorage.setItem('attendanceEntries', JSON.stringify(entries));
-}
-
-// 총 근무시간 계산하기
-function calculateTotalWorkTime(entries) {
-    let totalWorkTime = 0;
-    let lastEntryTime = null;
-    let totalOutgoingTime = 0;
-    let lastOutgoingTime = null;
-
-    entries.forEach(entry => {
-        const entryTime = new Date(entry.entryTime);
-
-        if (entry.type === '출근') {
-            lastEntryTime = entryTime;
-        } else if (entry.type === '외출') {
-            lastOutgoingTime = entryTime;
-        } else if (entry.type === '복귀' && lastOutgoingTime !== null) {
-            totalOutgoingTime += entryTime - lastOutgoingTime;
-            lastOutgoingTime = null;
-        } else if (entry.type === '퇴근' && lastEntryTime) {
-            totalWorkTime += entryTime - lastEntryTime - totalOutgoingTime;
-            lastEntryTime = null;
-        }
-    });
-
-    return formatTime(totalWorkTime);
-}
-
-// 총 근무시간을 nn시간 nn분으로 반환
-function formatTime(milliseconds) {
-    const totalMinutes = Math.floor(milliseconds / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}시간 ${minutes}분`;
-}
 
 // 현재 상태에 맞춰서 버튼 선택적으로 보여주기
 export function showModalBasedOnState() {
-    const entries = JSON.parse(localStorage.getItem('attendanceEntries')) || [];
-    const todayEntries = entries.filter(entry => entry.name === getCurrentUserName() && entry.date === getCurrentDate());
+    const userName = getCurrentUserName();
+    const currentDate = getCurrentDate();
 
-    let hasOutgoing = false;
-
-    // 외출이 이미 한 번 이상 있었는지 체크
-    todayEntries.forEach(entry => {
-        if (entry.type === '외출') {
-            hasOutgoing = true;
+    // GET 요청으로 출퇴근 기록을 가져오기
+    fetch(`get_one_today_attendance?name=${userName}&date=${currentDate}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
         }
+    })
+    .then(response => response.json())
+    .then(entry => {
+
+        entryButton.style.display = 'none';
+        outgoingButton.style.display = 'none';
+        returningButton.style.display = 'none';
+        exitButton.style.display = 'none';
+        cancelButton.style.display = 'inline-block'; // 취소 버튼은 항상 보이게 설정
+
+        if (!entry) {
+            // 출퇴근 기록이 없는 경우
+            entryButton.style.display = 'inline-block';
+            confirmationMessage.textContent = `${userName}님 출근하시겠습니까?`;
+        } else {
+            // 출퇴근 기록이 있는 경우
+            if (!entry.exit_time) {
+                // 퇴근 기록이 없는 경우
+                if (!entry.leave_time) {
+                    // 외출 기록이 없는 경우
+                    outgoingButton.style.display = 'inline-block';
+                    exitButton.style.display = 'inline-block';
+                    confirmationMessage.textContent = `${userName}님 외출 또는 퇴근하시겠습니까?`;
+                } else {
+                    // 외출 기록이 있는 경우
+                    returningButton.style.display = 'inline-block';
+                    exitButton.style.display = 'inline-block';
+                    confirmationMessage.textContent = `${userName}님 복귀 또는 퇴근하시겠습니까?`;
+                }
+            } else {
+                // 퇴근 기록이 있는 경우
+                // exitButton.style.display = 'inline-block';
+                // confirmationMessage.textContent = `${userName}님 퇴근하시겠습니까?`;
+                return;
+            }
+        }
+
+        confirmationModal.style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error fetching attendance data:', error);
+        // 에러 발생 시 처리 로직 추가 가능
     });
-
-    entryButton.style.display = 'none';
-    outgoingButton.style.display = 'none';
-    returningButton.style.display = 'none';
-    exitButton.style.display = 'none';
-
-    if (todayEntries.length === 0) {
-        entryButton.style.display = 'inline-block';
-        confirmationMessage.textContent = `${getCurrentUserName()}님 출근하시겠습니까?`;
-    } else {
-        const lastEntry = todayEntries[todayEntries.length - 1];
-        if ((lastEntry.type === '출근' || lastEntry.type === '복귀') && !hasOutgoing) {
-            outgoingButton.style.display = 'inline-block';
-            exitButton.style.display = 'inline-block';
-            confirmationMessage.textContent = `${getCurrentUserName()}님 외출 또는 퇴근하시겠습니까?`;
-        } else if (lastEntry.type === '외출') {
-            returningButton.style.display = 'inline-block';
-            exitButton.style.display = 'inline-block';
-            confirmationMessage.textContent = `${getCurrentUserName()}님 복귀 또는 퇴근하시겠습니까?`;
-        } else if (lastEntry.type === '출근' || lastEntry.type === '복귀') {
-            exitButton.style.display = 'inline-block';
-            confirmationMessage.textContent = `${getCurrentUserName()}님 퇴근하시겠습니까?`;
-        }
-    }
-
-    confirmationModal.style.display = 'block';
 }
 
 

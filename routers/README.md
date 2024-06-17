@@ -26,5 +26,5 @@
 
 ### routers/repository.py
 
-- **경로**: `/attendance/`, `/leave/`, `/return/`, `/exit/`
+- **경로**: `/attendance/`, `/leave/`, `/return/`, `/exit/`, `/get_user_id/`, `/get_today_attendance/`, `/get_one_today_attendance/`
 - **기능**: 클라이언트에서 요청받은 DB의 CRUD 요청을 수행합니다.

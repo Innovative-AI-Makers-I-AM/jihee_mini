@@ -9,16 +9,15 @@
 </head>
 <body>
     <header>
-        <h1>I AM (Innovative AI Makers) Project</h1>
+        <h1>하이미디어 AIX과정 출결</h1>
     </header>
     <main>
         <section class="video-section">
             <video id="video" class="flip-video" width="640" height="480" autoplay></video>
-            <button id="capture" class="button">캡쳐하기</button>
             <div id="result"></div>
         </section>
         <section class="entry-list-section">
-            <h2 id="recordTitle">프로젝트 구성원 출퇴근 기록</h2>
+            <h2 id="recordTitle">사용자 출입 기록</h2>
             <ul id="entries" class="entry-list"></ul>
         </section>
     </main>
@@ -36,6 +35,15 @@
         <div class="modal-content">
             <p id="alreadyExitedMessage"></p>
             <button id="alreadyExitedConfirmButton" class="button">확인</button>
+        </div>
+    </div>
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <p>등록된 사용자가 없어 사용자 등록 페이지로 이동합니다.</p>
+            <div class="button-container">
+                <button id="retryButton" class="button">다시 시도</button>
+                <button id="registerButton" class="button">등록</button>
+            </div>
         </div>
     </div>
 </body>

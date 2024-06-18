@@ -8,6 +8,7 @@ import numpy as np
 from utils.face import face_app
 # from utils.file import save_user_images
 from fastapi.templating import Jinja2Templates
+from db.database import add_user, session, User
 
 router = APIRouter()
 
@@ -59,14 +60,21 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
 
         embeddings.append(faces[0].normed_embedding.tolist())
         
-        # 디코딩된 이미지를 파일로 저장 (각도가 맞았을 때만 저장)
-        image_path = f'data/users/{user_name}/image{i}.png'
-        with open(image_path, "wb") as f:
-            f.write(image_data)
+        # # 디코딩된 이미지를 파일로 저장 (각도가 맞았을 때만 저장)
+        # image_path = f'data/users/{user_name}/image{i}.png'
+        # with open(image_path, "wb") as f:
+        #     f.write(image_data)
 
-    user_data = {"name": user_name, "embeddings": embeddings}
-    user_file = f"data/users/{user_name}.json"
-    with open(user_file, 'w') as f:
-        json.dump(user_data, f)
+    # user_data = {"name": user_name, "embeddings": embeddings}
+    # user_file = f"data/users/{user_name}.json"
+    # with open(user_file, 'w') as f:
+    #     json.dump(user_data, f)
+    add_user(user_name, embeddings)
+
+    
+# # # 사용자 데이터 조회
+#     users = session.query(User).all()
+#     for user in users:
+#         print(f"ID: {user.id}, Name: {user.name}, Embedding: {json.loads(user.embedding)}")
 
     return {"message": "성공적으로 등록되었습니다."}

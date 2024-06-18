@@ -4,6 +4,7 @@ import json
 import cv2
 import numpy as np
 from utils.face import face_app, calculate_face_similarity
+from db.database import session, User
 
 router = APIRouter()
 
@@ -29,20 +30,31 @@ async def identify_user(file: UploadFile = File(...)):
     max_similarity = 0.6    # 유사도의 초기 최대값 설정
     identified_user = None
 
-    # 저장된 사용자 데이터를 순회하며 유사도 비교
-    for user_file in os.listdir(users_dir):
-        if user_file.endswith(".json"):
-            # 사용자 데이터 파일을 읽음
-            with open(os.path.join(users_dir, user_file), 'r') as f:
-                user_data = json.load(f)
+    # 사용자 데이터 조회
+    users = session.query(User).all()
+    for user in users:
+        # print(f"ID: {user.id}, Name: {user.name}, Embedding: {json.loads(user.embedding)}")
+        savedEmbedding = json.loads(user.embedding)
+        similarity = calculate_face_similarity(np.array(savedEmbedding), target_embedding)
+        # 더 높은 유사도를 찾으면 최대 유사도와 해당 사용자 데이터 업데이트
+        if similarity > max_similarity:
+            max_similarity = similarity
+            identified_user = {"name": user.name, "embedding": savedEmbedding}
 
-            # 각 사용자 임베딩과 감지된 임베딩 간의 유사도 계산
-            for embedding in user_data["embeddings"]:
-                similarity = calculate_face_similarity(np.array(embedding), target_embedding)
-                # 더 높은 유사도를 찾으면 최대 유사도와 해당 사용자 데이터 업데이트
-                if similarity > max_similarity:
-                    max_similarity = similarity
-                    identified_user = user_data
+    # # 저장된 사용자 데이터를 순회하며 유사도 비교
+    # for user_file in os.listdir(users_dir):
+    #     if user_file.endswith(".json"):
+    #         # 사용자 데이터 파일을 읽음
+    #         with open(os.path.join(users_dir, user_file), 'r') as f:
+    #             user_data = json.load(f)
+
+    #         # 각 사용자 임베딩과 감지된 임베딩 간의 유사도 계산
+    #         for embedding in user_data["embeddings"]:
+    #             similarity = calculate_face_similarity(np.array(embedding), target_embedding)
+    #             # 더 높은 유사도를 찾으면 최대 유사도와 해당 사용자 데이터 업데이트
+    #             if similarity > max_similarity:
+    #                 max_similarity = similarity
+    #                 identified_user = user_data
 
     # 유사도가 높은 사용자를 찾으면 사용자 이름과 유사도 반환
     if identified_user:

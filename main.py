@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
-from routers import register, similarity, angle, identify
+from routers import register, similarity, angle, identify, repository
 
 app = FastAPI()
 
@@ -16,6 +16,7 @@ app.include_router(register.router)
 app.include_router(similarity.router)
 app.include_router(angle.router)
 app.include_router(identify.router)
+app.include_router(repository.router)
 
 @app.on_event("startup")
 async def startup_event():

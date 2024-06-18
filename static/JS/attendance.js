@@ -256,7 +256,7 @@ function updateEntriesList(userName) {
         let totalLeaveTime = calculateTotalLeaveTime(entry);
         
         let li = document.createElement('li');
-        li.textContent = `${entry.name} - (입실) ${entry.entry_time || '없음'} (외출) ${entry.leave_time || '없음'} (복귀) ${entry.return_time || '없음'} (퇴실) ${entry.exit_time || '없음'}  // (근무시간) ${totalWorkTime} // (외출시간) ${totalLeaveTime}`;
+        li.innerHTML = `${entry.name} - (입실) ${entry.entry_time || '없음'} (외출) ${entry.leave_time || '없음'} (복귀) ${entry.return_time || '없음'} (퇴실) ${entry.exit_time || '없음'} <br> (총 훈련 시간) ${totalWorkTime} // (총 외출 시간) ${totalLeaveTime}`;
         entriesList.appendChild(li);
     })
     .catch(error => console.error('Error fetching attendance data:', error));
@@ -287,7 +287,7 @@ export function showModalBasedOnState() {
         if (!entry) {
             // 출퇴근 기록이 없는 경우
             entryButton.style.display = 'inline-block';
-            confirmationMessage.textContent = `${userName}님 출근하시겠습니까?`;
+            confirmationMessage.textContent = `${userName}님 입실하시겠습니까?`;
         } else {
             // 출퇴근 기록이 있는 경우
             if (!entry.exit_time) {
@@ -296,12 +296,12 @@ export function showModalBasedOnState() {
                     // 외출 기록이 없는 경우
                     outgoingButton.style.display = 'inline-block';
                     exitButton.style.display = 'inline-block';
-                    confirmationMessage.textContent = `${userName}님 외출 또는 퇴근하시겠습니까?`;
+                    confirmationMessage.textContent = `${userName}님 외출 또는 퇴실하시겠습니까?`;
                 } else {
                     // 외출 기록이 있는 경우
                     returningButton.style.display = 'inline-block';
                     exitButton.style.display = 'inline-block';
-                    confirmationMessage.textContent = `${userName}님 복귀 또는 퇴근하시겠습니까?`;
+                    confirmationMessage.textContent = `${userName}님 복귀 또는 퇴실하시겠습니까?`;
                 }
             } else {
                 // 퇴근 기록이 있는 경우

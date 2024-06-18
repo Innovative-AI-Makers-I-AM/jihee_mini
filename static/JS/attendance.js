@@ -136,9 +136,14 @@ export function handleAction(type) {
                     })
                 })
                 .then(response => response.json())
-                .then(data => {console.log(data); console.log("출근됨")})
+                .then(data => {
+                    console.log(data);
+                    console.log("출근됨");
+                    updateEntriesList(userName);
+                })
                 .catch(error => console.error('Error:', error));
                 break;
+                
             case '외출':
                 fetch('leave', {
                     method: 'POST',
@@ -150,9 +155,14 @@ export function handleAction(type) {
                     })
                 })
                 .then(response => response.json())
-                .then(data => {console.log(data); console.log("외출됨")})
+                .then(data => {
+                    console.log(data);
+                    console.log("외출됨");
+                    updateEntriesList(userName);
+                })
                 .catch(error => console.error('Error:', error));
                 break;
+
             case '복귀':
                 fetch('return', {
                     method: 'POST',
@@ -164,9 +174,15 @@ export function handleAction(type) {
                     })
                 })
                 .then(response => response.json())
-                .then(data => {console.log(data); console.log("복귀됨")})
+                .then(data => {
+                    console.log(data);
+                    console.log("복귀됨");
+                    updateEntriesList(userName);
+
+                })
                 .catch(error => console.error('Error:', error));
                 break;
+
             case '퇴근':
                 fetch('exit', {
                     method: 'POST',
@@ -178,7 +194,12 @@ export function handleAction(type) {
                     })
                 })
                 .then(response => response.json())
-                .then(data => {console.log(data); console.log("퇴근됨")})
+                .then(data => {
+                    console.log(data);
+                    console.log("퇴근됨");
+                    updateEntriesList(userName);
+
+                })
                 .catch(error => console.error('Error:', error));
                 
                 // GET 요청으로 유저 ID 가져오기
@@ -215,6 +236,32 @@ export function handleAction(type) {
     .catch(error => console.error('Error:', error));
     }
 
+// 가람추가
+// 출퇴근 리스트 업데이트
+function updateEntriesList(userName) {
+    const currentDate = getCurrentDate();
+
+    // GET 요청으로 출퇴근 기록을 가져오기
+    fetch(`get_one_today_attendance?name=${userName}&date=${currentDate}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(entry => {
+        entriesList.innerHTML = ''; // 기존 리스트 초기화
+
+        let totalWorkTime = calculateTotalWorkTime(entry);
+        let totalLeaveTime = calculateTotalLeaveTime(entry);
+        
+        let li = document.createElement('li');
+        li.textContent = `${entry.name} - (입실) ${entry.entry_time || '없음'} (외출) ${entry.leave_time || '없음'} (복귀) ${entry.return_time || '없음'} (퇴실) ${entry.exit_time || '없음'}  // (근무시간) ${totalWorkTime} // (외출시간) ${totalLeaveTime}`;
+        entriesList.appendChild(li);
+    })
+    .catch(error => console.error('Error fetching attendance data:', error));
+}
+//
 
 // 현재 상태에 맞춰서 버튼 선택적으로 보여주기
 export function showModalBasedOnState() {

@@ -7,7 +7,7 @@ export function startVideoStream() {
         .then(stream => {
             video.srcObject = stream;
             const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
+            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/face_detection.js';
             script.onload = function () {
                 onScriptLoad(video);
             };
@@ -20,7 +20,7 @@ export function startVideoStream() {
 
 function onScriptLoad(video) {
     async function onResults(results) {
-        if (!getIsFaceDetected() && results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+        if (!getIsFaceDetected() && results.detections && results.detections.length > 0) {
             setIsFaceDetected(true);
             handleFaceRecognition();
         } else {
@@ -28,21 +28,20 @@ function onScriptLoad(video) {
         }
     }
 
-    const faceMesh = new FaceMesh({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+    const faceDetection = new FaceDetection({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
+      }});
+    faceDetection.setOptions({
+        modelSelection: 0,
+        minDetectionConfidence: 0.5
     });
-    faceMesh.setOptions({
-        maxNumFaces: 1,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
-    });
-    faceMesh.onResults(onResults);
+    faceDetection.onResults(onResults);
 
     setInterval(() => {
         if (!getIsFaceDetected()) {
-            faceMesh.send({ image: video });
+            faceDetection.send({ image: video });
         }
-    }, 500);
+    }, 1000);
 }
 
 window.addEventListener('beforeunload', () => {

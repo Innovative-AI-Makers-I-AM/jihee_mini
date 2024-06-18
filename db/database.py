@@ -30,8 +30,8 @@ class Attendance(Base):
 
     user = relationship("User", back_populates="attendances")
     
-# SQLite 데이터베이스 생성
-engine = create_engine('sqlite:///C:/Users/user/miniprj/jihee_mini/db/db.sqlite')   # 파일에 저장
+# SQLite 데이터베이스 생성C:\dev\jihee_mini\db
+engine = create_engine('sqlite:///C:/dev/jihee_mini/db/db.sqlite')   # 파일에 저장
 # engine = create_engine("sqlite+pysqlite:///:memory:", echo=True)  메모리에 저장
 
 # 테이블 생성

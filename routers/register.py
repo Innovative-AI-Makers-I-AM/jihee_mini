@@ -85,4 +85,3 @@ async def register_user(name: str = Form(...), front_image: str = Form(...), lef
     print(f"Stored embedding for user {user_name}: {user_embedding}")
 
     return {"message": "성공적으로 등록되었습니다."}
-0

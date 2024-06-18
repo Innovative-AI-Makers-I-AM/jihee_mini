@@ -71,7 +71,7 @@ async def identify_user(file: UploadFile = File(...), db: Session = Depends(get_
 
     # 유사도가 높은 사용자를 찾으면 사용자 이름과 유사도 반환
     if identified_user:
-        return {"name": identified_user.name, "similarity": max_similarity}
+        return {"name": identified_user.name, "user_id": identified_user.id, "similarity": max_similarity}
     
     # 확인용
     print("identify_user 함수 실행")

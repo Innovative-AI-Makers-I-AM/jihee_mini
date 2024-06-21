@@ -50,3 +50,4 @@ my_fastapi_app/
 │   ├── register.html
 
 └── static/
+dddddddd
